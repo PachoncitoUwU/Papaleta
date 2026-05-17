@@ -1,0 +1,699 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap');
+
+:root {
+  --bg: #ffffff;
+  --bg2: #f5f5f7;
+  --surface: #ffffff;
+  --surface2: #f5f5f7;
+  --sb: #1d1d1f;
+  --sb2: #2d2d2f;
+  --primary: #6366f1;
+  --primary-l: rgba(99,102,241,0.10);
+  --primary-d: #4f46e5;
+  --green: #34c759;
+  --amber: #ff9500;
+  --red: #ff3b30;
+  --text: #1d1d1f;
+  --text2: #424245;
+  --text3: #86868b;
+  --border: #d2d2d7;
+  --border2: #e8e8ed;
+  --r: 12px;
+  --r-sm: 8px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --t: .22s cubic-bezier(0.4,0,0.2,1);
+  --sh: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06);
+  --sh2: 0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg: #000000;
+  --bg2: #1c1c1e;
+  --surface: #1c1c1e;
+  --surface2: #2c2c2e;
+  --sb: #000000;
+  --sb2: #1c1c1e;
+  --primary: #ff6a3d;
+  --primary-l: rgba(255,106,61,0.12);
+  --primary-d: #ff4f1f;
+  --text: #f5f5f7;
+  --text2: #aeaeb2;
+  --text3: #636366;
+  --border: #3a3a3c;
+  --border2: #2c2c2e;
+  --sh: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.3);
+  --sh2: 0 4px 24px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* BASE */
+#papaleta-root *, #papaleta-root *::before, #papaleta-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
+#papaleta-root {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  transition: background .4s ease, color .3s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+#papaleta-root .hidden { display: none !important; }
+#papaleta-root ::-webkit-scrollbar { width: 4px; }
+#papaleta-root ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+#papaleta-root button { cursor: pointer; font-family: var(--font); border: none; }
+#papaleta-root [contenteditable]:focus { outline: none; }
+
+/* ANIMATIONS */
+@keyframes pp-fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pp-pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes pp-spin { to { transform: rotate(360deg); } }
+@keyframes pp-pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+@keyframes pp-ripple { to { transform: scale(4); opacity: 0; } }
+
+#papaleta-root .spin {
+  display: inline-block; width: 15px; height: 15px;
+  border: 2px solid var(--border2); border-top-color: var(--primary);
+  border-radius: 50%; animation: pp-spin .7s linear infinite; vertical-align: middle;
+}
+#papaleta-root .ripple-fx {
+  position: absolute; border-radius: 50%;
+  background: rgba(255,255,255,.25); animation: pp-ripple .55s ease-out; pointer-events: none;
+}
+
+/* ───── LOGIN ───── */
+#papaleta-root .login-screen {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #06060f;
+  z-index: 100; overflow: hidden;
+}
+
+#papaleta-root .login-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0; display: block;
+}
+
+/* Liquid glass card — always on dark background */
+#papaleta-root .login-card {
+  position: relative; z-index: 1;
+  background: rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(32px) saturate(160%) brightness(1.1);
+  -webkit-backdrop-filter: blur(32px) saturate(160%) brightness(1.1);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 44px 40px;
+  width: 400px; max-width: 94vw;
+  box-shadow:
+    0 32px 80px rgba(0,0,0,0.7),
+    0 8px 24px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -1px 0 rgba(255,255,255,0.04);
+  animation: pp-pop .4s cubic-bezier(0.34,1.56,0.64,1);
+  /* override color vars for dark glass context */
+  --text: #f5f5f7;
+  --text2: rgba(245,245,247,0.72);
+  --text3: rgba(245,245,247,0.42);
+  --bg2: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.16);
+  --surface: rgba(255,255,255,0.08);
+}
+
+/* ───── REGEN MODAL ───── */
+#papaleta-root .regen-modal-backdrop {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  animation: pp-fadeUp .18s ease;
+}
+#papaleta-root .regen-modal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 32px 28px;
+  width: 460px; max-width: 94vw;
+  box-shadow: var(--sh2);
+  animation: pp-pop .22s ease;
+}
+#papaleta-root .regen-modal-title {
+  font-size: 18px; font-weight: 700; color: var(--text);
+  margin-bottom: 6px;
+}
+#papaleta-root .regen-modal-sub {
+  font-size: 13px; color: var(--text3); margin-bottom: 16px; line-height: 1.5;
+}
+#papaleta-root .regen-modal-input {
+  width: 100%; padding: 12px 14px; border-radius: var(--r);
+  border: 1.5px solid var(--border); background: var(--bg2);
+  color: var(--text); font-family: var(--font); font-size: 13px;
+  line-height: 1.6; resize: vertical; outline: none; transition: border-color var(--t);
+}
+#papaleta-root .regen-modal-input:focus { border-color: var(--primary); }
+#papaleta-root .regen-modal-actions {
+  display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end;
+}
+#papaleta-root .regen-btn-cancel {
+  padding: 10px 18px; background: var(--surface2); color: var(--text2);
+  border: 1px solid var(--border); border-radius: var(--r); font-size: 14px; font-weight: 500;
+  transition: background var(--t);
+}
+#papaleta-root .regen-btn-cancel:hover { background: var(--border2); }
+#papaleta-root .regen-btn-confirm {
+  padding: 10px 20px; background: var(--primary); color: #fff;
+  border: none; border-radius: var(--r); font-size: 14px; font-weight: 600;
+  transition: background var(--t);
+}
+#papaleta-root .regen-btn-confirm:hover { background: var(--primary-d); }
+#papaleta-root .lc-logo-img {
+  width: 72px; height: 72px;
+  display: block; margin: 0 auto 20px;
+  border-radius: 18px;
+  object-fit: contain;
+}
+#papaleta-root .lc-title {
+  font-size: 28px; font-weight: 700; letter-spacing: -.5px;
+  text-align: center; color: var(--text); margin-bottom: 6px;
+}
+#papaleta-root .lc-sub {
+  color: var(--text3); font-size: 14px; font-weight: 400;
+  text-align: center; margin-bottom: 28px;
+}
+#papaleta-root .lc-features {
+  display: flex; flex-direction: column; gap: 6px; margin-bottom: 28px;
+}
+#papaleta-root .lcf {
+  font-size: 13px; color: var(--text2); padding: 9px 14px;
+  background: var(--bg2); border-radius: var(--r-sm);
+  font-weight: 500; line-height: 1.4;
+}
+#papaleta-root .btn-google {
+  width: 100%; display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 13px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); font-size: 14px; font-weight: 600;
+  color: var(--text); transition: var(--t); cursor: pointer;
+  position: relative; overflow: hidden;
+}
+#papaleta-root .btn-google:hover { background: var(--bg2); border-color: var(--text3); }
+#papaleta-root .btn-local {
+  width: 100%; margin-top: 10px; padding: 13px;
+  background: var(--primary); color: #fff;
+  border-radius: var(--r); font-size: 14px; font-weight: 600;
+  transition: var(--t); letter-spacing: -.1px;
+}
+#papaleta-root .btn-local:hover { background: var(--primary-d); }
+#papaleta-root .lc-note {
+  text-align: center; color: var(--text3); font-size: 12px;
+  margin-top: 16px; font-weight: 400;
+}
+
+/* ───── APP SHELL ───── */
+#papaleta-root .app { display: flex; height: 100vh; overflow: hidden; }
+
+/* MOBILE TOPBAR */
+#papaleta-root .mobile-topbar {
+  display: none; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--sb);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  color: #fff; position: fixed; top: 0; left: 0; right: 0; z-index: 30;
+  font-size: 15px; font-weight: 700;
+}
+#papaleta-root .mt-logo { display: flex; align-items: center; gap: 8px; }
+#papaleta-root .mt-logo-img { height: 22px; width: auto; }
+
+/* ───── SIDEBAR ───── */
+#papaleta-root .sidebar {
+  width: 260px; background: var(--sb);
+  border-right: 1px solid rgba(255,255,255,.06);
+  display: flex; flex-direction: column; flex-shrink: 0;
+  transition: width var(--t); overflow: hidden; z-index: 35;
+}
+#papaleta-root .sidebar.collapsed { width: 60px; }
+#papaleta-root .sb-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 34; backdrop-filter: blur(2px); }
+#papaleta-root .sb-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 18px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+#papaleta-root .sb-logo-link { display: flex; align-items: center; gap: 10px; text-decoration: none; transition: var(--t); }
+#papaleta-root .sb-logo-link:hover { opacity: .8; }
+#papaleta-root .sb-logo-img { height: 30px; width: auto; object-fit: contain; }
+#papaleta-root .sb-logo-text { font-size: 17px; font-weight: 700; color: #fff; white-space: nowrap; letter-spacing: -.3px; }
+#papaleta-root .sidebar.collapsed .sb-logo-text { display: none; }
+#papaleta-root .sidebar.collapsed .sb-logo-img { height: 26px; }
+#papaleta-root .icon-btn {
+  background: none; border: none; color: rgba(255,255,255,.45);
+  font-size: 16px; padding: 6px; border-radius: var(--r-sm); transition: var(--t);
+}
+#papaleta-root .icon-btn:hover { background: rgba(255,255,255,.07); color: #fff; }
+
+#papaleta-root .btn-new {
+  margin: 14px 12px 10px;
+  padding: 11px 16px;
+  background: var(--primary); color: #fff;
+  border: none; border-radius: var(--r);
+  font-weight: 600; font-size: 13px;
+  display: flex; align-items: center; gap: 8px;
+  transition: var(--t); white-space: nowrap; overflow: hidden; cursor: pointer;
+  position: relative; letter-spacing: -.1px;
+}
+#papaleta-root .btn-new:hover { background: var(--primary-d); transform: translateY(-1px); }
+#papaleta-root .btn-new:active { transform: translateY(0); }
+#papaleta-root .btn-new span { font-size: 17px; line-height: 1; }
+#papaleta-root .sidebar.collapsed .btn-new { padding: 11px; justify-content: center; }
+#papaleta-root .sidebar.collapsed .btn-new span:last-child { display: none; }
+
+#papaleta-root .sb-section-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+  color: rgba(255,255,255,.28); padding: 14px 16px 5px;
+  text-transform: uppercase; white-space: nowrap; overflow: hidden;
+}
+#papaleta-root .sidebar.collapsed .sb-section-label { display: none; }
+#papaleta-root .ideas-nav { flex: 1; overflow-y: auto; padding: 4px 8px; }
+#papaleta-root .ideas-nav::-webkit-scrollbar { width: 3px; }
+#papaleta-root .ideas-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); }
+#papaleta-root .empty-nav { font-size: 12px; color: rgba(255,255,255,.28); text-align: center; padding: 20px 10px; line-height: 1.6; }
+#papaleta-root .idea-nav-item {
+  padding: 9px 10px; border-radius: var(--r-sm); cursor: pointer;
+  transition: var(--t); margin-bottom: 1px; white-space: nowrap; overflow: hidden;
+}
+#papaleta-root .idea-nav-item:hover { background: rgba(255,255,255,.06); }
+#papaleta-root .idea-nav-item.active { background: rgba(255,255,255,.09); border-left: 2px solid var(--primary); }
+#papaleta-root .ini-title { font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 3px; text-overflow: ellipsis; overflow: hidden; }
+#papaleta-root .ini-meta { display: flex; gap: 8px; }
+#papaleta-root .ini-tag { font-size: 10px; padding: 1px 7px; background: rgba(255,255,255,.09); color: rgba(255,255,255,.55); border-radius: 20px; font-weight: 600; }
+#papaleta-root .ini-pct { font-size: 10px; color: rgba(255,255,255,.4); font-weight: 600; }
+
+#papaleta-root .sb-footer {
+  padding: 12px 10px; border-top: 1px solid rgba(255,255,255,.06);
+  display: flex; align-items: center; gap: 8px; overflow: hidden;
+}
+#papaleta-root .btn-dark-mode {
+  background: rgba(255,255,255,.08); border: none; color: rgba(255,255,255,.7);
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; cursor: pointer; transition: var(--t); flex-shrink: 0;
+  position: relative; overflow: hidden;
+}
+#papaleta-root .btn-dark-mode:hover { background: rgba(255,255,255,.14); color: #fff; }
+#papaleta-root .theme-toggle-svg { position: relative; z-index: 1; display: block; }
+#papaleta-root .sun-icon, #papaleta-root .moon-icon { transition: all .6s cubic-bezier(0.4,0,0.2,1); transform-origin: center; }
+#papaleta-root .sun-center, #papaleta-root .sun-ray { stroke-dasharray: 100; stroke-dashoffset: 0; transition: stroke-dashoffset .6s cubic-bezier(0.4,0,0.2,1), transform .6s cubic-bezier(0.4,0,0.2,1); }
+#papaleta-root .moon-icon { stroke-dasharray: 100; stroke-dashoffset: 0; transition: stroke-dashoffset .6s cubic-bezier(0.4,0,0.2,1), transform .6s cubic-bezier(0.4,0,0.2,1); position: absolute; top: 0; left: 0; }
+#papaleta-root[data-theme="dark"] .sun-icon { transform: scale(0); opacity: 0; pointer-events: none; }
+#papaleta-root[data-theme="dark"] .sun-center, #papaleta-root[data-theme="dark"] .sun-ray { stroke-dashoffset: 100; }
+#papaleta-root[data-theme="dark"] .moon-icon { transform: scale(1); opacity: 1; stroke-dashoffset: 0; position: relative; }
+#papaleta-root[data-theme="light"] .sun-icon { transform: scale(1); opacity: 1; position: relative; }
+#papaleta-root[data-theme="light"] .sun-center, #papaleta-root[data-theme="light"] .sun-ray { stroke-dashoffset: 0; }
+#papaleta-root[data-theme="light"] .moon-icon { transform: scale(0); opacity: 0; stroke-dashoffset: 100; position: absolute; }
+
+#papaleta-root .u-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1.5px solid rgba(255,255,255,.15); }
+#papaleta-root .u-name { flex: 1; font-size: 12px; font-weight: 500; color: rgba(255,255,255,.65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* HEATMAP CELLS */
+#papaleta-root .hm-cell { width: 14px; height: 14px; border-radius: 3px; background: var(--border2); transition: all var(--t); cursor: pointer; }
+#papaleta-root .hm-cell:hover { transform: scale(1.2); }
+#papaleta-root .hm-cell.l1 { background: color-mix(in srgb, var(--primary) 20%, var(--border2)); }
+#papaleta-root .hm-cell.l2 { background: color-mix(in srgb, var(--primary) 45%, transparent); }
+#papaleta-root .hm-cell.l3 { background: color-mix(in srgb, var(--primary) 70%, transparent); }
+#papaleta-root .hm-cell.l4 { background: var(--primary); }
+
+/* ───── MAIN CONTENT ───── */
+#papaleta-root .main { flex: 1; overflow-y: auto; background: var(--bg); }
+
+/* ───── DASHBOARD ───── */
+#papaleta-root .dashboard { max-width: 1040px; margin: 0 auto; padding: 44px 40px; animation: pp-fadeUp .3s ease; }
+#papaleta-root .dash-profile-header { display: flex; align-items: center; gap: 18px; margin-bottom: 40px; }
+#papaleta-root .user-profile-pic {
+  width: 56px; height: 56px; border-radius: 50%;
+  overflow: hidden; flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+#papaleta-root .profile-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#papaleta-root .profile-initials {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--primary); color: #fff;
+  font-size: 20px; font-weight: 700;
+}
+#papaleta-root .user-greeting { font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -.5px; line-height: 1.3; }
+
+/* STAT CARDS */
+#papaleta-root .dash-stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 36px; }
+#papaleta-root .stat-card {
+  background: var(--surface); border-radius: var(--r-lg);
+  padding: 24px 20px; text-align: center;
+  border: 1px solid var(--border); transition: var(--t);
+}
+#papaleta-root .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--sh); }
+#papaleta-root .stat-icon { font-size: 26px; margin-bottom: 10px; }
+#papaleta-root .stat-value { font-size: 30px; font-weight: 700; color: var(--primary); margin-bottom: 4px; letter-spacing: -.5px; }
+#papaleta-root .stat-label { font-size: 12px; color: var(--text3); font-weight: 500; }
+
+/* HEATMAP CARD */
+#papaleta-root .dash-heatmap-card {
+  background: var(--surface); border-radius: var(--r-lg);
+  padding: 28px; border: 1px solid var(--border); margin-bottom: 28px;
+}
+#papaleta-root .dhc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+#papaleta-root .dhc-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: var(--text); }
+#papaleta-root .dhc-icon { font-size: 18px; }
+#papaleta-root .dhc-total { font-size: 12px; color: var(--text3); background: var(--bg2); padding: 5px 14px; border-radius: 20px; font-weight: 500; }
+#papaleta-root .dhc-months { display: flex; margin-left: 42px; margin-bottom: 6px; gap: 0; }
+#papaleta-root .dhc-month-label { font-size: 10px; color: var(--text3); font-weight: 500; flex: 1; min-width: 0; text-align: left; }
+#papaleta-root .dhc-grid { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 14px; }
+#papaleta-root .dhc-days { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
+#papaleta-root .dhc-days span { height: 14px; font-size: 10px; color: var(--text3); line-height: 14px; white-space: nowrap; width: 32px; text-align: right; font-weight: 500; }
+#papaleta-root .dhc-heatmap { display: grid; grid-template-rows: repeat(7,14px); grid-auto-flow: column; gap: 4px; }
+#papaleta-root .dhc-legend { display: flex; align-items: center; gap: 5px; justify-content: flex-end; font-size: 11px; color: var(--text3); font-weight: 500; padding-top: 10px; border-top: 1px solid var(--border2); }
+
+/* IDEAS GRID */
+#papaleta-root .dash-ideas-section { margin-bottom: 28px; }
+#papaleta-root .dis-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+#papaleta-root .dis-title { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -.3px; }
+#papaleta-root .dis-count { font-size: 12px; color: var(--text3); background: var(--bg2); padding: 5px 14px; border-radius: 20px; font-weight: 500; }
+#papaleta-root .ideas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 16px; }
+#papaleta-root .ideas-empty {
+  grid-column: 1/-1; text-align: center; padding: 56px 20px;
+  background: var(--surface); border-radius: var(--r-lg);
+  border: 1.5px dashed var(--border);
+}
+#papaleta-root .ie-icon { font-size: 48px; margin-bottom: 14px; opacity: .5; }
+#papaleta-root .ie-text { color: var(--text3); font-size: 14px; line-height: 1.7; margin-bottom: 20px; }
+#papaleta-root .idea-card {
+  background: var(--surface); border-radius: var(--r-lg);
+  overflow: hidden; border: 1px solid var(--border);
+  transition: var(--t); cursor: pointer; animation: pp-fadeUp .3s ease;
+}
+#papaleta-root .idea-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--sh2); }
+#papaleta-root .ic-image {
+  width: 100%; height: 150px; background: var(--bg2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px; color: var(--text3);
+}
+#papaleta-root .ic-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#papaleta-root .ic-image-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+#papaleta-root .ic-body { padding: 14px 16px; }
+#papaleta-root .ic-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 7px; }
+#papaleta-root .ic-tag { padding: 2px 9px; background: var(--primary-l); color: var(--primary); border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
+#papaleta-root .ic-progress { font-size: 11px; font-weight: 700; color: var(--primary); }
+#papaleta-root .ic-title { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.4; margin-bottom: 7px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; letter-spacing: -.1px; }
+#papaleta-root .ic-date { font-size: 11px; color: var(--text3); font-weight: 400; }
+
+/* ───── WORKSPACE ───── */
+#papaleta-root .workspace { padding: 40px; max-width: 860px; margin: 0 auto; animation: pp-fadeUp .3s ease; }
+#papaleta-root .idea-header-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-xl); padding: 28px 32px;
+  margin-bottom: 28px; display: flex;
+  justify-content: space-between; align-items: center; gap: 24px;
+  transition: var(--t);
+}
+#papaleta-root .ihc-left { flex: 1; min-width: 0; }
+#papaleta-root .ihc-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+#papaleta-root .ihc-right { flex-shrink: 0; }
+#papaleta-root .progress-ring { position: relative; width: 72px; height: 72px; }
+#papaleta-root .ring-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#papaleta-root .ring-label { font-size: 18px; font-weight: 700; color: var(--primary); line-height: 1; letter-spacing: -.5px; }
+#papaleta-root .ring-sublabel-bottom { font-size: 9px; font-weight: 600; color: var(--text3); letter-spacing: .5px; text-transform: uppercase; margin-top: 4px; text-align: center; }
+#papaleta-root .ring-svg { transform: rotate(-90deg); }
+#papaleta-root .ring-bg { fill: none; stroke: var(--border2); stroke-width: 5; }
+#papaleta-root .ring-fg { fill: none; stroke: var(--primary); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 195; stroke-dashoffset: 195; transition: stroke-dashoffset .9s cubic-bezier(.4,0,.2,1); }
+#papaleta-root .tag-pill { padding: 3px 12px; background: var(--primary-l); color: var(--primary); border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: .2px; }
+#papaleta-root .date-label { font-size: 11px; color: var(--text3); font-weight: 400; }
+#papaleta-root .idea-title {
+  font-size: 26px; font-weight: 700; color: var(--text);
+  line-height: 1.3; border: none; padding: 0;
+  transition: color var(--t); min-height: 1.3em;
+  word-break: break-word; letter-spacing: -.4px;
+}
+#papaleta-root .idea-title:focus { color: var(--primary); outline: none; }
+#papaleta-root .idea-title:empty::before { content: 'Título de tu idea…'; color: var(--text3); font-weight: 500; }
+
+/* BUTTONS */
+#papaleta-root .btn-primary {
+  position: relative; display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 22px; background: var(--primary); color: #fff;
+  border: none; border-radius: var(--r); font-size: 14px; font-weight: 600;
+  transition: var(--t); cursor: pointer; overflow: hidden; letter-spacing: -.1px;
+}
+#papaleta-root .btn-primary:hover { background: var(--primary-d); transform: translateY(-1px); }
+#papaleta-root .btn-primary:active { transform: translateY(0); }
+#papaleta-root .btn-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+#papaleta-root .chip-btn {
+  padding: 6px 13px; font-size: 12px; font-weight: 600;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text2); border-radius: 20px; transition: var(--t);
+  display: inline-flex; align-items: center; gap: 5px;
+}
+#papaleta-root .chip-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-l); }
+#papaleta-root .chip-btn.recording { background: rgba(255,59,48,.08); border-color: var(--red); color: var(--red); animation: pp-pulse 1s infinite; }
+#papaleta-root .chip-btn-sm { padding: 3px 9px; font-size: 11px; background: var(--surface); border: 1px solid var(--border); color: var(--text2); border-radius: 20px; }
+
+/* ───── INPUT ZONE ───── */
+#papaleta-root .input-zone {
+  background: var(--surface); border-radius: var(--r-lg);
+  overflow: hidden; margin-bottom: 16px;
+  border: 1px solid var(--border); transition: border-color var(--t);
+}
+#papaleta-root .input-zone:focus-within { border-color: var(--primary); }
+#papaleta-root .iz-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px 0; flex-wrap: wrap; gap: 8px; }
+#papaleta-root .iz-label { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: .5px; text-transform: uppercase; }
+#papaleta-root .iz-actions { display: flex; gap: 8px; }
+#papaleta-root .iz-textarea {
+  width: 100%; min-height: 120px; padding: 14px 18px;
+  background: transparent; border: none; color: var(--text);
+  font-family: var(--font); font-size: 15px; line-height: 1.7; resize: vertical;
+}
+#papaleta-root .iz-textarea::placeholder { color: var(--text3); }
+
+#papaleta-root .live-visual {
+  display: grid; grid-template-columns: minmax(200px,1fr) minmax(200px,.9fr);
+  gap: 14px; margin: 0 18px 14px; padding: 14px;
+  border: 1px solid var(--border2); border-radius: var(--r);
+  background: var(--surface2);
+}
+#papaleta-root .lv-preview {
+  min-height: 180px; border-radius: var(--r-sm); overflow: hidden;
+  background: var(--bg2); display: flex; align-items: center; justify-content: center;
+  border: 1px dashed var(--border);
+}
+#papaleta-root .lv-preview img { width: 100%; height: 100%; min-height: 180px; object-fit: cover; display: block; }
+#papaleta-root .lv-empty { max-width: 240px; text-align: center; color: var(--text3); font-size: 13px; line-height: 1.6; padding: 16px; }
+#papaleta-root .lv-copy { display: flex; flex-direction: column; justify-content: center; gap: 6px; min-width: 0; }
+#papaleta-root .lv-kicker { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); }
+#papaleta-root .lv-title { font-size: 18px; font-weight: 700; line-height: 1.3; color: var(--text); letter-spacing: -.3px; }
+#papaleta-root .lv-status { font-size: 13px; line-height: 1.6; color: var(--text2); }
+
+#papaleta-root .api-settings { margin: 0 18px 14px; padding: 11px 14px; border: 1px solid var(--border2); border-radius: var(--r-sm); background: var(--surface2); }
+#papaleta-root .api-settings summary { cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text); list-style: none; }
+#papaleta-root .api-settings summary::-webkit-details-marker { display: none; }
+#papaleta-root .api-row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+#papaleta-root .api-input {
+  flex: 1; min-width: 0; border: 1px solid var(--border);
+  border-radius: var(--r-sm); background: var(--surface);
+  color: var(--text); padding: 9px 12px; font: inherit; font-size: 13px;
+}
+#papaleta-root .api-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-l); }
+#papaleta-root .api-help { margin-top: 6px; font-size: 11px; line-height: 1.5; color: var(--text3); }
+#papaleta-root .img-preview-wrap { position: relative; padding: 0 18px 12px; }
+#papaleta-root .img-preview-thumb { max-width: 180px; max-height: 130px; border-radius: var(--r-sm); border: 1px solid var(--border); object-fit: cover; }
+#papaleta-root .img-rm { position: absolute; top: 4px; right: 22px; background: var(--red); color: #fff; width: 20px; height: 20px; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+#papaleta-root .voice-bar { display: flex; align-items: center; gap: 8px; padding: 9px 18px; background: rgba(255,59,48,.05); border-top: 1px solid rgba(255,59,48,.12); font-size: 13px; color: var(--red); }
+#papaleta-root .vdot { width: 7px; height: 7px; background: var(--red); border-radius: 50%; animation: pp-pulse 1s infinite; flex-shrink: 0; }
+#papaleta-root .iz-footer { padding: 12px 18px; border-top: 1px solid var(--border2); display: flex; justify-content: flex-end; }
+
+/* ───── Q&A ───── */
+#papaleta-root .qa-card {
+  background: var(--surface); border-radius: var(--r-lg);
+  padding: 28px; margin-bottom: 16px;
+  border: 1px solid var(--border); animation: pp-fadeUp .3s ease;
+}
+#papaleta-root .qa-progress { height: 3px; background: var(--border2); border-radius: 3px; margin-bottom: 20px; overflow: hidden; }
+#papaleta-root .qa-progress-fill { height: 3px; background: var(--primary); border-radius: 3px; transition: width .4s ease; }
+#papaleta-root .qa-counter { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 12px; text-transform: uppercase; }
+#papaleta-root .qa-question { font-size: 16px; font-weight: 600; color: var(--text); line-height: 1.5; margin-bottom: 16px; letter-spacing: -.1px; }
+#papaleta-root .qa-textarea {
+  width: 100%; min-height: 86px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: var(--r);
+  font-family: var(--font); font-size: 14px; color: var(--text);
+  resize: vertical; line-height: 1.6; transition: border-color var(--t);
+  background: var(--surface);
+}
+#papaleta-root .qa-textarea:focus { outline: none; border-color: var(--primary); }
+#papaleta-root .qa-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+#papaleta-root .qa-skip {
+  padding: 9px 16px; background: none; border: 1px solid var(--border);
+  border-radius: var(--r); font-size: 13px; font-weight: 500; color: var(--text3); transition: var(--t);
+}
+#papaleta-root .qa-skip:hover { border-color: var(--text3); color: var(--text); }
+#papaleta-root .qa-next {
+  padding: 9px 22px; background: var(--primary); color: #fff;
+  border-radius: var(--r); font-size: 13px; font-weight: 600; transition: var(--t);
+}
+#papaleta-root .qa-next:hover { background: var(--primary-d); }
+
+/* ───── RESULTS ───── */
+#papaleta-root .results { display: flex; flex-direction: column; gap: 20px; }
+#papaleta-root .hero-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+#papaleta-root .hero-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--border2); flex-wrap: wrap; gap: 8px; }
+#papaleta-root .block-label { font-size: 12px; font-weight: 600; color: var(--text3); letter-spacing: .2px; }
+#papaleta-root .hero-wrap { min-height: 240px; display: flex; align-items: center; justify-content: center; background: var(--bg2); }
+#papaleta-root .hero-loading { display: flex; gap: 10px; align-items: center; color: var(--text3); font-size: 13px; padding: 40px; }
+#papaleta-root .hero-img { width: 100%; max-height: 420px; object-fit: cover; display: block; }
+#papaleta-root .hero-no-img { padding: 40px; text-align: center; color: var(--text3); font-size: 13px; line-height: 1.6; }
+#papaleta-root .hero-no-img button { margin-top: 10px; padding: 8px 16px; background: var(--primary); color: #fff; border-radius: var(--r-sm); font-size: 13px; font-weight: 600; }
+
+/* DOC */
+#papaleta-root .doc-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+#papaleta-root .doc-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--border2); flex-wrap: wrap; gap: 8px; }
+#papaleta-root .doc-hint { font-size: 11px; color: var(--text3); }
+#papaleta-root .doc-toolbar { display: flex; gap: 2px; padding: 7px 14px; border-bottom: 1px solid var(--border2); background: var(--surface2); flex-wrap: wrap; }
+#papaleta-root .tb-btn { padding: 5px 9px; background: none; border: none; border-radius: var(--r-sm); color: var(--text2); font-size: 13px; transition: var(--t); }
+#papaleta-root .tb-btn:hover { background: var(--border2); }
+#papaleta-root .tb-sep { width: 1px; background: var(--border); margin: 3px 5px; }
+#papaleta-root .master-doc { padding: 22px 24px; min-height: 180px; font-size: 14px; line-height: 1.85; color: var(--text); }
+#papaleta-root .master-doc:empty::before { content: 'El contenido aparecerá aquí…'; color: var(--text3); }
+#papaleta-root .master-doc h3 { font-size: 15px; font-weight: 700; margin: 16px 0 8px; letter-spacing: -.1px; }
+#papaleta-root .master-doc ul, #papaleta-root .master-doc ol { padding-left: 20px; margin: 8px 0; }
+#papaleta-root .master-doc li { margin-bottom: 4px; }
+
+/* FLOAT MENU */
+#papaleta-root .float-menu {
+  position: fixed; z-index: 50; background: var(--sb);
+  border: 1px solid rgba(255,255,255,.1); border-radius: var(--r);
+  padding: 4px; display: flex; gap: 2px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.35); animation: pp-pop .15s ease; flex-wrap: wrap;
+}
+#papaleta-root .fm-btn { padding: 7px 12px; background: none; border-radius: var(--r-sm); color: rgba(255,255,255,.85); font-size: 12px; font-weight: 600; transition: var(--t); }
+#papaleta-root .fm-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+
+/* KANBAN */
+#papaleta-root .kanban-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+#papaleta-root .kanban-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--border2); flex-wrap: wrap; gap: 8px; }
+#papaleta-root .kanban-board { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; padding: 18px; }
+#papaleta-root .k-col { background: var(--bg2); border-radius: var(--r); padding: 12px; min-height: 140px; border: 1px solid var(--border2); }
+#papaleta-root .k-col-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 10px; }
+#papaleta-root .k-cards { min-height: 60px; display: flex; flex-direction: column; gap: 6px; }
+#papaleta-root .k-card {
+  background: var(--surface); border-radius: var(--r-sm);
+  padding: 10px 12px; font-size: 13px; font-weight: 500; color: var(--text);
+  border: 1px solid var(--border); cursor: grab; transition: var(--t);
+  line-height: 1.4; user-select: none;
+}
+#papaleta-root .k-card:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: var(--sh); }
+#papaleta-root .k-card.dragging { opacity: .4; cursor: grabbing; }
+#papaleta-root .k-col.drag-over { background: var(--primary-l); border-color: var(--primary); }
+#papaleta-root .k-add { width: 100%; margin-top: 8px; padding: 8px; background: none; border: 1.5px dashed var(--border); border-radius: var(--r-sm); color: var(--text3); font-size: 12px; font-weight: 500; transition: var(--t); }
+#papaleta-root .k-add:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-l); }
+
+/* TIMELINE */
+#papaleta-root .timeline-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+#papaleta-root .tl-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--border2); }
+#papaleta-root .tl-list { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+#papaleta-root .tl-empty { padding: 32px; text-align: center; color: var(--text3); font-size: 13px; }
+#papaleta-root .tl-item { display: flex; gap: 14px; align-items: flex-start; }
+#papaleta-root .tl-img { width: 80px; height: 60px; object-fit: cover; border-radius: var(--r-sm); border: 1px solid var(--border); flex-shrink: 0; }
+#papaleta-root .tl-body { flex: 1; }
+#papaleta-root .tl-date { font-size: 11px; color: var(--text3); font-weight: 500; margin-bottom: 4px; }
+#papaleta-root .tl-desc { font-size: 13px; color: var(--text2); line-height: 1.55; }
+
+/* CHAT */
+#papaleta-root .chat-fab {
+  position: fixed; bottom: 28px; right: 28px; z-index: 40;
+  width: 52px; height: 52px; background: var(--primary); color: #fff;
+  border-radius: 50%; font-size: 22px; display: flex;
+  align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(99,102,241,.4); transition: var(--t);
+  cursor: pointer; border: none;
+}
+#papaleta-root .chat-fab:hover { background: var(--primary-d); transform: scale(1.06); }
+[data-theme="dark"] #papaleta-root .chat-fab { box-shadow: 0 4px 20px rgba(255,106,61,.35); }
+
+#papaleta-root .chat-panel {
+  position: fixed; bottom: 92px; right: 28px; z-index: 45;
+  width: 340px; max-height: 480px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-xl); box-shadow: var(--sh2);
+  display: flex; flex-direction: column; animation: pp-pop .2s ease;
+  overflow: hidden;
+}
+#papaleta-root .chat-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--border2);
+}
+#papaleta-root .chat-title { font-size: 14px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 7px; }
+#papaleta-root .chat-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; }
+#papaleta-root .btn-close-chat { background: none; border: none; color: var(--text3); font-size: 18px; cursor: pointer; padding: 2px 6px; transition: var(--t); }
+#papaleta-root .btn-close-chat:hover { color: var(--text); }
+#papaleta-root .chat-msgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+#papaleta-root .chat-msgs::-webkit-scrollbar { width: 3px; }
+#papaleta-root .bubble {
+  max-width: 88%; padding: 10px 14px;
+  border-radius: 16px; font-size: 13px; line-height: 1.55; font-weight: 400;
+  animation: pp-fadeUp .2s ease;
+}
+#papaleta-root .bubble.ai { background: var(--bg2); color: var(--text); border-radius: 4px 16px 16px 16px; }
+#papaleta-root .bubble.user { background: var(--primary); color: #fff; align-self: flex-end; border-radius: 16px 4px 16px 16px; }
+#papaleta-root .chat-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--border2); align-items: flex-end; }
+#papaleta-root .chat-input {
+  flex: 1; resize: none; border: 1px solid var(--border); border-radius: var(--r);
+  padding: 9px 12px; font-family: var(--font); font-size: 13px; color: var(--text);
+  background: var(--surface); max-height: 100px; line-height: 1.5; transition: border-color var(--t);
+}
+#papaleta-root .chat-input:focus { outline: none; border-color: var(--primary); }
+#papaleta-root .btn-send {
+  width: 36px; height: 36px; background: var(--primary); color: #fff;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0; transition: var(--t);
+}
+#papaleta-root .btn-send:hover { background: var(--primary-d); }
+#papaleta-root .chat-attach { background: none; border: none; color: var(--text3); font-size: 16px; padding: 6px; cursor: pointer; transition: var(--t); }
+#papaleta-root .chat-attach:hover { color: var(--primary); }
+
+/* TOAST */
+#papaleta-toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  background: var(--sb); color: #fff;
+  padding: 10px 20px; border-radius: 24px;
+  font-family: var(--font); font-size: 13px; font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,.3);
+  z-index: 9999; display: none; white-space: nowrap;
+  border: 1px solid rgba(255,255,255,.08);
+  animation: pp-fadeUp .2s ease;
+}
+
+/* DASH STATS MISSING */
+#papaleta-root .dash-cta { text-align: center; }
+#papaleta-root .btn-large { padding: 14px 36px; font-size: 15px; gap: 10px; }
+#papaleta-root .btn-large span { font-size: 18px; }
+
+/* PROGRESS RING gradient fallback */
+#papaleta-root .ring-fg { stroke: var(--primary); }
+
+/* ───── RESPONSIVE ───── */
+@media (max-width: 768px) {
+  #papaleta-root .mobile-topbar { display: flex; }
+  #papaleta-root .sidebar {
+    position: fixed; left: -280px; top: 0; bottom: 0;
+    width: 260px !important; z-index: 36;
+    transition: left var(--t), width var(--t);
+  }
+  #papaleta-root .sidebar.open { left: 0; }
+  #papaleta-root .main { padding-top: 50px; }
+  #papaleta-root .dashboard { padding: 24px 16px; }
+  #papaleta-root .workspace { padding: 20px 16px; }
+  #papaleta-root .dash-stats-grid { grid-template-columns: repeat(2,1fr); gap: 12px; }
+  #papaleta-root .kanban-board { grid-template-columns: 1fr; }
+  #papaleta-root .chat-panel { right: 12px; left: 12px; width: auto; }
+  #papaleta-root .chat-fab { bottom: 20px; right: 16px; }
+  #papaleta-root .idea-header-card { flex-direction: column; align-items: flex-start; gap: 16px; }
+  #papaleta-root .live-visual { grid-template-columns: 1fr; }
+  #papaleta-root .user-greeting { font-size: 22px; }
+}

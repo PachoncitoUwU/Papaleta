@@ -1,0 +1,23 @@
+# Firebase
+firebase-debug.log
+.firebase/
+
+# Environment variables (NUNCA subir keys)
+.env
+.env.local
+.env.production
+config.local.js
+
+# Vercel
+.vercel
+
+# Node
+node_modules/
+npm-debug.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# iOS Project (separate repo)
+PapaletaIos/
