@@ -1,5 +1,5 @@
 {
-  "name": "@workspace/papaleta-mobile",
+  "name": "@workspace/mobile",
   "version": "0.0.0",
   "private": true,
   "main": "expo-router/entry",
