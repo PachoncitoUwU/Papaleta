@@ -22,19 +22,23 @@ git clone https://github.com/PachoncitoUwU/Papaleta.git
 cd Papaleta
 ```
 
-### 2. Configurar API Key (Desarrollo Local)
+### 2. Configurar API Key (Obligatorio)
+
+**Obtén tu key gratis:**
+1. Ve a [https://console.groq.com/keys](https://console.groq.com/keys)
+2. Crea una cuenta gratis
+3. Genera una API key
+
+**Configura la key:**
 ```bash
 # Copiar archivo de configuración
 cp config.js config.local.js
 
-# Editar config.local.js y agregar tu Groq API key
-# Obtén tu key gratis en: https://console.groq.com/keys
+# Editar config.local.js y pegar tu key
+# window.GROQ_API_KEY = 'gsk_tu_key_aqui';
 ```
 
-En `config.local.js`:
-```javascript
-window.GROQ_API_KEY = 'gsk_tu_key_aqui';
-```
+📖 **Guía completa:** Ver [SETUP.md](SETUP.md)
 
 ### 3. Iniciar Servidor Local
 ```bash
@@ -46,7 +50,7 @@ python -m http.server 8000
 http://localhost:8000
 ```
 
-**⚠️ IMPORTANTE:** Nunca subas tu `config.local.js` a GitHub. El archivo está en `.gitignore` para proteger tu API key.
+**⚠️ IMPORTANTE:** Sin la API key configurada, la IA no funcionará. Ver [SETUP.md](SETUP.md) para más detalles.
 
 ## 🛠️ Tecnologías
 
