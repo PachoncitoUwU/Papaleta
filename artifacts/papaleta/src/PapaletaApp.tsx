@@ -1,5 +1,7 @@
+
 import { useEffect } from "react";
 import "./papaleta.css";
+import { DottedSurface } from "./components/ui/dotted-surface";
 
 declare global {
   interface Window {
@@ -1070,83 +1072,6 @@ export default function PapaletaApp() {
           toast("Modo local gratis activado");
         }
 
-        function initLoginParticles() {
-          const canvas = document.getElementById("login-canvas") as HTMLCanvasElement;
-          if (!canvas) return;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) return;
-          let animId: number;
-          let t = 0;
-          const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-          resize();
-          window.addEventListener("resize", resize);
-
-          const draw = () => {
-            const W = canvas.width, H = canvas.height;
-
-            // Dark base
-            ctx.fillStyle = "#06060f";
-            ctx.fillRect(0, 0, W, H);
-
-            // Purple radial glow at horizon
-            const hY = H * 0.54;
-            const grd = ctx.createRadialGradient(W / 2, hY, 0, W / 2, hY, W * 0.6);
-            grd.addColorStop(0, "rgba(90,55,180,0.55)");
-            grd.addColorStop(0.35, "rgba(45,20,100,0.2)");
-            grd.addColorStop(1, "rgba(0,0,0,0)");
-            ctx.fillStyle = grd;
-            ctx.fillRect(0, 0, W, H);
-
-            // 3D perspective dot grid
-            const COLS = 24, ROWS = 32;
-            const FOV = W * 0.78;
-            const CAM_H = 95;
-
-            for (let iz = ROWS - 1; iz >= 0; iz--) {
-              for (let ix = 0; ix < COLS; ix++) {
-                const wz = 55 + (iz / ROWS) * 940;
-                const wx = (ix / (COLS - 1) - 0.5) * 1300;
-                const wave =
-                  Math.sin((ix * 0.5 + t) * 0.85) * 42 +
-                  Math.sin((iz * 0.38 + t * 0.65) * 0.72) * 30;
-                const wy = CAM_H - wave;
-
-                const scale = FOV / wz;
-                const sx = W / 2 + wx * scale;
-                const sy = hY + wy * scale;
-
-                if (sx < -8 || sx > W + 8 || sy > H + 12 || sy < hY - 140) continue;
-
-                const size = Math.min(4.2, Math.max(0.25, scale * 6));
-                const alpha = Math.min(0.95, Math.max(0.04, scale * 2.2));
-
-                if (size > 2) {
-                  ctx.beginPath();
-                  ctx.arc(sx, sy, size * 3, 0, Math.PI * 2);
-                  ctx.fillStyle = `rgba(180,155,255,${alpha * 0.065})`;
-                  ctx.fill();
-                }
-
-                ctx.beginPath();
-                ctx.arc(sx, sy, size, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255,255,255,${alpha * 0.88})`;
-                ctx.fill();
-              }
-            }
-
-            // Top fade — dark overlay so card area is readable
-            const fade = ctx.createLinearGradient(0, 0, 0, hY * 0.72);
-            fade.addColorStop(0, "rgba(6,6,15,0.97)");
-            fade.addColorStop(1, "rgba(6,6,15,0)");
-            ctx.fillStyle = fade;
-            ctx.fillRect(0, 0, W, H);
-
-            t += 0.012;
-            animId = requestAnimationFrame(draw);
-          };
-          draw();
-        }
-
         function wire() {
           if (wired) return;
           wired = true;
@@ -1286,9 +1211,6 @@ export default function PapaletaApp() {
           regenModal?.classList.add("hidden");
         };
 
-        // Particle background for login
-        initLoginParticles();
-
       } catch (err) {
         console.error("Papaleta init error:", err);
       }
@@ -1325,8 +1247,12 @@ export default function PapaletaApp() {
 
       {/* LOGIN */}
       <div id="login" className="login-screen">
-        <canvas id="login-canvas" className="login-canvas"></canvas>
-        <div className="login-card">
+        <DottedSurface />
+        <div className="login-card" style={{
+          background: "rgba(255, 255, 255, 0.1)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+        }}>
           <img src="/papaletaarriba.png" alt="Papaleta" className="lc-logo-img" />
           <h1 className="lc-title">Papaleta</h1>
           <p className="lc-sub">Tu laboratorio de ideas con IA</p>
