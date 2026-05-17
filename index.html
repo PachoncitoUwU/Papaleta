@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Papaleta</title>
+  <meta name="description" content="Captura y potencia tus ideas con IA"/>
+  <link rel="icon" type="image/png" href="papaletaarriba.png"/>
+  <link rel="apple-touch-icon" href="papaletaarriba.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <svg width="0" height="0" style="position:absolute"><defs>
+    <linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs></svg>
+</head>
+<body>
+
+<!-- Configuración de API Keys (solo desarrollo local) -->
+<script src="config.js"></script>
+
+<!-- LOGIN -->
+<div id="login" class="login-screen">
+  <div class="login-glow g1"></div><div class="login-glow g2"></div>
+  <div class="login-card">
+    <img src="papaletaarriba.png" alt="Papaleta" class="lc-logo-img"/>
+    <h1 class="lc-title">Papaleta</h1>
+    <p class="lc-sub">Tu laboratorio de ideas con IA</p>
+    <div class="lc-features">
+      <div class="lcf">🔍 Analiza con preguntas inteligentes</div>
+      <div class="lcf">✨ Potencia y estructura con IA</div>
+      <div class="lcf">🗂️ Kanban interactivo</div>
+      <div class="lcf">📸 Bitácora visual de avances</div>
+    </div>
+    <button id="btn-login" class="btn-google">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.07 5.07 0 01-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09a6.97 6.97 0 010-4.18V7.07H2.18A11 11 0 001 12c0 1.78.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continuar con Google
+    </button>
+    <button id="btn-local" class="btn-local">Entrar gratis sin cuenta</button>
+    <p class="lc-note">Gratis · Sin tarjeta · Datos privados</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="app hidden">
+
+  <!-- MOBILE TOPBAR -->
+  <div class="mobile-topbar">
+    <button id="btn-hamburger" class="icon-btn">☰</button>
+    <span class="mt-logo"><img src="papaletaLogok.png" alt="Papaleta" class="mt-logo-img"/> Papaleta</span>
+    <button id="btn-new-mobile" class="icon-btn" onclick="document.getElementById('btn-new').click()">+</button>
+  </div>
+
+  <!-- SIDEBAR + OVERLAY -->
+  <div id="sb-overlay" class="sb-overlay hidden"></div>
+  <aside id="sidebar" class="sidebar">
+    <div class="sb-header">
+      <a href="#" onclick="event.preventDefault();showDashboard();return false;" class="sb-logo-link">
+        <img src="papaletaarriba.png" alt="Papaleta" class="sb-logo-img"/>
+        <span class="sb-logo-text">Papaleta</span>
+      </a>
+      <button id="btn-collapse" class="icon-btn" title="Colapsar">‹</button>
+    </div>
+
+    <button id="btn-new" class="btn-new"><span>+</span> Nueva Idea</button>
+    <div class="sb-section-label">MIS IDEAS</div>
+    <div id="ideas-nav" class="ideas-nav"><div class="empty-nav">Crea tu primera idea ✨</div></div>
+    <div class="sb-footer">
+      <button id="btn-dark-mode" class="btn-dark-mode" title="Cambiar tema">
+        <span class="dm-icon">🌙</span>
+      </button>
+      <img id="uavatar" class="u-avatar" src="" alt=""/>
+      <span id="uname" class="u-name">—</span>
+      <button id="btn-logout" class="icon-btn" title="Salir">⇥</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main" class="main">
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="dashboard">
+      <!-- USER PROFILE HEADER -->
+      <div class="dash-profile-header">
+        <div id="user-profile-pic" class="user-profile-pic">
+          <div class="profile-initials">U</div>
+        </div>
+        <div>
+          <h1 id="user-greeting" class="user-greeting">Hola Usuario, ¿qué ideas tienes hoy?</h1>
+          <p style="font-size:15px;color:var(--text2);margin-top:4px">Tu Laboratorio de Ideas</p>
+        </div>
+      </div>
+
+      <!-- STATS CARDS -->
+      <div class="dash-stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">💡</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Ideas Creadas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-value" id="stat-progress">0</div>
+          <div class="stat-label">En Progreso</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="stat-completed">0</div>
+          <div class="stat-label">Completadas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-value" id="stat-streak">0</div>
+          <div class="stat-label">Días Seguidos</div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY HEATMAP -->
+      <div class="dash-heatmap-card">
+        <div class="dhc-header">
+          <div class="dhc-title">
+            <span class="dhc-icon">📅</span>
+            <span>Tu Actividad</span>
+          </div>
+          <span id="dhc-total" class="dhc-total">0 acciones</span>
+        </div>
+        <div class="dhc-months" id="dhc-months"></div>
+        <div class="dhc-grid">
+          <div class="dhc-days">
+            <span></span><span>Lun</span><span></span><span>Mié</span><span></span><span>Vie</span><span></span>
+          </div>
+          <div id="heatmap" class="dhc-heatmap"></div>
+        </div>
+        <div class="dhc-legend">
+          <span>Menos</span>
+          <div class="hm-cell"></div><div class="hm-cell l1"></div><div class="hm-cell l2"></div><div class="hm-cell l3"></div><div class="hm-cell l4"></div>
+          <span>Más</span>
+        </div>
+      </div>
+
+      <!-- IDEAS RECIENTES -->
+      <div class="dash-ideas-section">
+        <div class="dis-header">
+          <h2 class="dis-title">💡 Ideas Potenciadas</h2>
+          <span id="dis-count" class="dis-count">0 ideas</span>
+        </div>
+        <div id="ideas-grid" class="ideas-grid">
+          <div class="ideas-empty">
+            <div class="ie-icon">✨</div>
+            <p class="ie-text">Aún no has creado ninguna idea.<br>¡Empieza ahora y potencia tus proyectos con IA!</p>
+            <button class="btn-primary" onclick="document.getElementById('btn-new').click()">
+              <span>+</span> Crear Primera Idea
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="dash-cta">
+        <button class="btn-primary btn-large" onclick="document.getElementById('btn-new').click()">
+          <span>✨</span> Crear Nueva Idea
+        </button>
+      </div>
+    </div>
+
+    <!-- WORKSPACE (IDEA CANVAS) -->
+    <!-- WORKSPACE (IDEA CANVAS) -->
+    <div id="workspace" class="workspace hidden">
+      <!-- IDEA HEADER CARD -->
+      <div class="idea-header-card">
+        <div class="ihc-left">
+          <div class="ihc-meta">
+            <span id="idea-tag" class="tag-pill">Idea</span>
+            <span id="idea-date" class="date-label">Hoy</span>
+          </div>
+          <h1 id="idea-title" contenteditable="true" spellcheck="false" class="idea-title">Nueva idea</h1>
+        </div>
+        <div class="ihc-right">
+          <div class="progress-ring">
+            <svg width="80" height="80" class="ring-svg">
+              <circle cx="40" cy="40" r="34" class="ring-bg"/>
+              <circle id="ring-arc" cx="40" cy="40" r="34" class="ring-fg"/>
+            </svg>
+            <div class="ring-content">
+              <span id="ring-pct" class="ring-label">0%</span>
+            </div>
+          </div>
+          <span class="ring-sublabel-bottom">Progreso</span>
+        </div>
+      </div>
+
+      <!-- INPUT -->
+      <div id="input-zone" class="input-zone">
+        <div class="iz-header">
+          <span class="iz-label">💡 Describe tu idea</span>
+          <div class="iz-actions">
+            <button id="btn-voice" class="chip-btn">🎤 Voz</button>
+            <label for="file-img" class="chip-btn">🖼️ Imagen</label>
+            <input type="file" id="file-img" accept="image/*" class="hidden"/>
+          </div>
+        </div>
+        <textarea id="idea-text" class="iz-textarea" placeholder="Habla o escribe tu idea. Papaleta la transcribe y crea una imagen gratis con IA."></textarea>
+        <div id="live-visual" class="live-visual">
+          <div class="lv-preview" id="live-visual-preview">
+            <div class="lv-empty">Tu imagen aparecerá aquí mientras dictas la idea.</div>
+          </div>
+          <div class="lv-copy">
+            <div class="lv-kicker">Voz → texto → imagen</div>
+            <div id="live-visual-title" class="lv-title">Empieza a hablar para visualizar la idea</div>
+            <div id="live-visual-status" class="lv-status">En local pega tu key para generar. Sin key uso un respaldo viejo que puede fallar.</div>
+          </div>
+        </div>
+        <details class="api-settings">
+          <summary>Configurar generación de imágenes</summary>
+          <div class="api-row">
+            <input id="pollinations-key" class="api-input" type="password" placeholder="Pollinations API key: sk_... o pk_..."/>
+            <button id="btn-save-img-api" class="chip-btn" type="button">Guardar key</button>
+          </div>
+          <p class="api-help">Modo local: puedes pegar tu <strong>sk_</strong> para probar. No publiques la app así; en producción esa key va en backend o variable de entorno.</p>
+        </details>
+        <div id="img-preview-wrap" class="img-preview-wrap hidden">
+          <img id="img-preview" class="img-preview-thumb" alt=""/><button id="btn-rm-img" class="img-rm">✕</button>
+        </div>
+        <div id="voice-bar" class="voice-bar hidden"><span class="vdot"></span><span id="voice-status">Escuchando y transcribiendo…</span><button id="btn-stop-voice" class="chip-btn-sm">■ Detener</button></div>
+        <div class="iz-footer"><button id="btn-analyze" class="btn-primary"><span id="analyze-lbl">🔍 Analizar con IA</span><span id="analyze-spin" class="spin hidden"></span></button></div>
+      </div>
+
+      <!-- Q&A -->
+      <div id="qa-zone" class="hidden"></div>
+
+      <!-- RESULTS -->
+      <div id="results" class="results hidden">
+        <!-- HERO IMAGE -->
+        <div class="hero-section">
+          <div class="hero-header"><span class="block-label">🎨 Visualización del Concepto</span><button id="btn-regen-img" class="chip-btn">🔄 Regenerar</button></div>
+          <div id="hero-wrap" class="hero-wrap"><div class="hero-loading"><span class="spin"></span> Generando imagen…</div></div>
+        </div>
+
+        <!-- MASTER DOC -->
+        <div class="doc-section">
+          <div class="doc-header"><span class="block-label">📄 Documento Maestro</span><span class="doc-hint">✏️ Edita libremente · Selecciona texto → menú IA</span></div>
+          <div class="doc-toolbar">
+            <button class="tb-btn" data-cmd="bold"><b>B</b></button>
+            <button class="tb-btn" data-cmd="italic"><i>I</i></button>
+            <button class="tb-btn" data-cmd="underline"><u>U</u></button>
+            <span class="tb-sep"></span>
+            <button class="tb-btn" data-cmd="insertUnorderedList">≡</button>
+            <button class="tb-btn" data-cmd="formatBlock" data-val="h3">H</button>
+          </div>
+          <div id="master-doc" class="master-doc" contenteditable="true"></div>
+          <div id="float-menu" class="float-menu hidden">
+            <button class="fm-btn" data-action="improve">✨ Mejorar</button>
+            <button class="fm-btn" data-action="expand">📖 Expandir</button>
+            <button class="fm-btn" data-action="simplify">✂️ Simplificar</button>
+            <button class="fm-btn" data-action="alternatives">💡 Alternativas</button>
+          </div>
+        </div>
+
+        <!-- TIMELINE / GALLERY -->
+        <div class="timeline-section">
+          <div class="tl-header">
+            <span class="block-label">📸 Bitácora de Avances</span>
+            <label for="file-timeline" class="chip-btn">📷 Subir foto</label>
+            <input type="file" id="file-timeline" accept="image/*" multiple class="hidden"/>
+          </div>
+          <div id="timeline" class="timeline">
+            <div class="tl-empty">Sube fotos de tu proceso para documentar el avance 📷</div>
+          </div>
+        </div>
+
+        <!-- KANBAN -->
+        <div class="kanban-section">
+          <div class="block-label" style="margin-bottom:14px">🗂️ Plan de Acción</div>
+          <div class="kanban-board" id="kanban-board">
+            <div class="k-col" data-col="todo">
+              <div class="k-col-head todo-head">📋 Por Hacer<button class="k-add-btn" onclick="addKanbanCard('todo')">+</button></div>
+              <div class="k-col-body" id="k-todo"></div>
+            </div>
+            <div class="k-col" data-col="doing">
+              <div class="k-col-head doing-head">⚡ En Progreso<button class="k-add-btn" onclick="addKanbanCard('doing')">+</button></div>
+              <div class="k-col-body" id="k-doing"></div>
+            </div>
+            <div class="k-col" data-col="done">
+              <div class="k-col-head done-head">✅ Completado<button class="k-add-btn" onclick="addKanbanCard('done')">+</button></div>
+              <div class="k-col-body" id="k-done"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- CHAT -->
+  <button id="chat-fab" class="chat-fab">💬</button>
+  <div id="chat-panel" class="chat-panel hidden">
+    <div class="cp-header"><span>💬 Asistente IA</span><button id="btn-close-chat" class="icon-btn cp-close">✕</button></div>
+    <div id="chat-msgs" class="chat-msgs"><div class="bubble ai">¡Hola! Puedo editar tu documento, agregar tareas al plan, actualizar tu progreso o responder preguntas. 🚀</div></div>
+    <div class="cp-footer">
+      <label for="chat-file" class="icon-btn cp-attach">📎</label>
+      <input type="file" id="chat-file" accept="image/*" class="hidden"/>
+      <textarea id="chat-input" class="cp-input" rows="1" placeholder="Escribe aquí…"></textarea>
+      <button id="btn-send" class="btn-send">↑</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
