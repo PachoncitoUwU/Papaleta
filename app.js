@@ -703,20 +703,12 @@ function toggleDarkMode(){
   html.setAttribute('data-theme',newTheme);
   localStorage.setItem('pp_theme',newTheme);
   
-  // Cambiar icono
-  const icon=$('btn-dark-mode')?.querySelector('.dm-icon');
-  if(icon)icon.textContent=isDark?'🌙':'☀️';
-  
   toast(isDark?'Modo claro activado':'Modo oscuro activado');
 }
 
 function loadDarkMode(){
   const savedTheme=localStorage.getItem('pp_theme')||'light';
   document.documentElement.setAttribute('data-theme',savedTheme);
-  
-  // Actualizar icono
-  const icon=$('btn-dark-mode')?.querySelector('.dm-icon');
-  if(icon)icon.textContent=savedTheme==='dark'?'☀️':'🌙';
 }
 
 function renderHeatmap(){
