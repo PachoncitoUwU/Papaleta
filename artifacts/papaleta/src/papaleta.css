@@ -86,34 +86,40 @@
 #papaleta-root .login-screen {
   position: fixed; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 40%, #f5f0ff 100%);
+  background: #06060f;
   z-index: 100; overflow: hidden;
-}
-[data-theme="dark"] #papaleta-root .login-screen {
-  background: linear-gradient(135deg, #0a0a18 0%, #130a2a 50%, #0a1525 100%);
 }
 
 #papaleta-root .login-canvas {
   position: absolute; inset: 0; width: 100%; height: 100%;
-  pointer-events: none; z-index: 0;
+  pointer-events: none; z-index: 0; display: block;
 }
 
+/* Liquid glass card — always on dark background */
 #papaleta-root .login-card {
   position: relative; z-index: 1;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: var(--r-xl);
+  background: rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(32px) saturate(160%) brightness(1.1);
+  -webkit-backdrop-filter: blur(32px) saturate(160%) brightness(1.1);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   padding: 44px 40px;
   width: 400px; max-width: 94vw;
-  box-shadow: 0 8px 40px rgba(99,102,241,0.10), 0 2px 8px rgba(0,0,0,0.06);
-  animation: pp-pop .35s cubic-bezier(0.34,1.56,0.64,1);
-}
-[data-theme="dark"] #papaleta-root .login-card {
-  background: rgba(20, 18, 36, 0.78);
-  border-color: rgba(255, 255, 255, 0.09);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow:
+    0 32px 80px rgba(0,0,0,0.7),
+    0 8px 24px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -1px 0 rgba(255,255,255,0.04);
+  animation: pp-pop .4s cubic-bezier(0.34,1.56,0.64,1);
+  /* override color vars for dark glass context */
+  --text: #f5f5f7;
+  --text2: rgba(245,245,247,0.72);
+  --text3: rgba(245,245,247,0.42);
+  --bg2: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.16);
+  --surface: rgba(255,255,255,0.08);
 }
 
 /* ───── REGEN MODAL ───── */

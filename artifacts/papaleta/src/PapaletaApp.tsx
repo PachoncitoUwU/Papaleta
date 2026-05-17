@@ -1076,28 +1076,72 @@ export default function PapaletaApp() {
           const ctx = canvas.getContext("2d");
           if (!ctx) return;
           let animId: number;
-          let count = 0;
+          let t = 0;
           const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
           resize();
           window.addEventListener("resize", resize);
-          const COLS = 30, ROWS = 20;
+
           const draw = () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const isDark = document.getElementById("papaleta-root")?.getAttribute("data-theme") === "dark";
-            for (let x = 0; x < COLS; x++) {
-              for (let y = 0; y < ROWS; y++) {
-                const px = (x / (COLS - 1)) * canvas.width;
-                const baseY = (y / (ROWS - 1)) * canvas.height;
-                const wave = Math.sin((x + count) * 0.35) * 20 + Math.sin((y + count) * 0.5) * 14;
-                const size = 2.2 + Math.sin((x * 0.7 + y * 0.3 + count) * 0.4) * 1.3;
-                const alpha = 0.12 + Math.abs(Math.sin((x + y + count) * 0.18)) * 0.1;
+            const W = canvas.width, H = canvas.height;
+
+            // Dark base
+            ctx.fillStyle = "#06060f";
+            ctx.fillRect(0, 0, W, H);
+
+            // Purple radial glow at horizon
+            const hY = H * 0.54;
+            const grd = ctx.createRadialGradient(W / 2, hY, 0, W / 2, hY, W * 0.6);
+            grd.addColorStop(0, "rgba(90,55,180,0.55)");
+            grd.addColorStop(0.35, "rgba(45,20,100,0.2)");
+            grd.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, W, H);
+
+            // 3D perspective dot grid
+            const COLS = 24, ROWS = 32;
+            const FOV = W * 0.78;
+            const CAM_H = 95;
+
+            for (let iz = ROWS - 1; iz >= 0; iz--) {
+              for (let ix = 0; ix < COLS; ix++) {
+                const wz = 55 + (iz / ROWS) * 940;
+                const wx = (ix / (COLS - 1) - 0.5) * 1300;
+                const wave =
+                  Math.sin((ix * 0.5 + t) * 0.85) * 42 +
+                  Math.sin((iz * 0.38 + t * 0.65) * 0.72) * 30;
+                const wy = CAM_H - wave;
+
+                const scale = FOV / wz;
+                const sx = W / 2 + wx * scale;
+                const sy = hY + wy * scale;
+
+                if (sx < -8 || sx > W + 8 || sy > H + 12 || sy < hY - 140) continue;
+
+                const size = Math.min(4.2, Math.max(0.25, scale * 6));
+                const alpha = Math.min(0.95, Math.max(0.04, scale * 2.2));
+
+                if (size > 2) {
+                  ctx.beginPath();
+                  ctx.arc(sx, sy, size * 3, 0, Math.PI * 2);
+                  ctx.fillStyle = `rgba(180,155,255,${alpha * 0.065})`;
+                  ctx.fill();
+                }
+
                 ctx.beginPath();
-                ctx.arc(px, baseY + wave, size, 0, Math.PI * 2);
-                ctx.fillStyle = isDark ? `rgba(255,130,70,${alpha})` : `rgba(99,102,241,${alpha})`;
+                ctx.arc(sx, sy, size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255,255,255,${alpha * 0.88})`;
                 ctx.fill();
               }
             }
-            count += 0.035;
+
+            // Top fade — dark overlay so card area is readable
+            const fade = ctx.createLinearGradient(0, 0, 0, hY * 0.72);
+            fade.addColorStop(0, "rgba(6,6,15,0.97)");
+            fade.addColorStop(1, "rgba(6,6,15,0)");
+            ctx.fillStyle = fade;
+            ctx.fillRect(0, 0, W, H);
+
+            t += 0.012;
             animId = requestAnimationFrame(draw);
           };
           draw();
