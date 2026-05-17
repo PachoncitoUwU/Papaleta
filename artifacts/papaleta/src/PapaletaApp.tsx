@@ -31,6 +31,8 @@ export default function PapaletaApp() {
           signInWithPopup,
           signOut,
           onAuthStateChanged,
+          setPersistence,
+          browserLocalPersistence,
         } = await import("firebase/auth");
         const {
           getFirestore,
@@ -41,6 +43,8 @@ export default function PapaletaApp() {
           updateDoc,
           query,
           where,
+          setDoc,
+          getDoc,
         } = await import("firebase/firestore");
 
         const FB = {
@@ -60,6 +64,22 @@ export default function PapaletaApp() {
         const auth = getAuth(fbApp);
         const db = getFirestore(fbApp);
         const provider = new GoogleAuthProvider();
+        await setPersistence(auth, browserLocalPersistence).catch(() => {});
+
+        async function loadUserSettings(uid: string) {
+          try {
+            const snap = await getDoc(doc(db, "users", uid));
+            if (snap.exists()) {
+              const data = snap.data();
+              if (data.groqKey) localStorage.setItem("pp_groq_key", data.groqKey);
+            }
+          } catch (e) {}
+        }
+
+        async function saveUserSettings(uid: string, settings: Record<string, any>) {
+          try { await setDoc(doc(db, "users", uid), settings, { merge: true }); }
+          catch (e) {}
+        }
 
         const $ = (id: string) => document.getElementById(id);
         let user: any = null,
@@ -1050,6 +1070,39 @@ export default function PapaletaApp() {
           toast("Modo local gratis activado");
         }
 
+        function initLoginParticles() {
+          const canvas = document.getElementById("login-canvas") as HTMLCanvasElement;
+          if (!canvas) return;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+          let animId: number;
+          let count = 0;
+          const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+          resize();
+          window.addEventListener("resize", resize);
+          const COLS = 30, ROWS = 20;
+          const draw = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const isDark = document.getElementById("papaleta-root")?.getAttribute("data-theme") === "dark";
+            for (let x = 0; x < COLS; x++) {
+              for (let y = 0; y < ROWS; y++) {
+                const px = (x / (COLS - 1)) * canvas.width;
+                const baseY = (y / (ROWS - 1)) * canvas.height;
+                const wave = Math.sin((x + count) * 0.35) * 20 + Math.sin((y + count) * 0.5) * 14;
+                const size = 2.2 + Math.sin((x * 0.7 + y * 0.3 + count) * 0.4) * 1.3;
+                const alpha = 0.12 + Math.abs(Math.sin((x + y + count) * 0.18)) * 0.1;
+                ctx.beginPath();
+                ctx.arc(px, baseY + wave, size, 0, Math.PI * 2);
+                ctx.fillStyle = isDark ? `rgba(255,130,70,${alpha})` : `rgba(99,102,241,${alpha})`;
+                ctx.fill();
+              }
+            }
+            count += 0.035;
+            animId = requestAnimationFrame(draw);
+          };
+          draw();
+        }
+
         function wire() {
           if (wired) return;
           wired = true;
@@ -1132,6 +1185,7 @@ export default function PapaletaApp() {
             localMode = false;
             localStorage.removeItem("pp_local_mode");
             user = u;
+            await loadUserSettings(u.uid);
             $("login")?.classList.add("hidden");
             $("app")?.classList.remove("hidden");
             updateUserProfile(u);
@@ -1139,6 +1193,8 @@ export default function PapaletaApp() {
             renderNav();
             showDashboard();
             wire();
+            const gki = $("groq-key-input") as HTMLInputElement;
+            if (gki) gki.value = localStorage.getItem("pp_groq_key") || "";
           } else {
             if (localMode) { await startLocalSession(); return; }
             $("login")?.classList.remove("hidden");
@@ -1157,10 +1213,37 @@ export default function PapaletaApp() {
         if (groqKeyInput) groqKeyInput.value = localStorage.getItem("pp_groq_key") || "";
         if (btnSaveGroq) btnSaveGroq.onclick = () => {
           const key = groqKeyInput?.value.trim();
-          if (key) localStorage.setItem("pp_groq_key", key);
-          else localStorage.removeItem("pp_groq_key");
-          toast("Groq API key guardada");
+          if (key) {
+            localStorage.setItem("pp_groq_key", key);
+            if (user?.uid && user.uid !== "local") saveUserSettings(user.uid, { groqKey: key });
+          } else {
+            localStorage.removeItem("pp_groq_key");
+            if (user?.uid && user.uid !== "local") saveUserSettings(user.uid, { groqKey: "" });
+          }
+          toast("✅ Key guardada — no la necesitarás pegar de nuevo");
         };
+
+        // Image regen modal
+        const regenModal = $("regen-modal");
+        const regenPromptInput = $("regen-prompt-input") as HTMLTextAreaElement;
+        const btnRegenConfirm = $("btn-regen-confirm");
+        const btnRegenCancel = $("btn-regen-cancel");
+        const btnOpenRegen = $("btn-regen-img");
+        if (btnOpenRegen) btnOpenRegen.onclick = () => {
+          if (regenPromptInput) regenPromptInput.value = lastImgPrompt || "";
+          regenModal?.classList.remove("hidden");
+          regenPromptInput?.focus();
+        };
+        if (btnRegenCancel) btnRegenCancel.onclick = () => regenModal?.classList.add("hidden");
+        if (regenModal) regenModal.onclick = (e: MouseEvent) => { if (e.target === regenModal) regenModal.classList.add("hidden"); };
+        if (btnRegenConfirm) btnRegenConfirm.onclick = () => {
+          const prompt = regenPromptInput?.value.trim();
+          if (prompt) { lastImgPrompt = prompt; genImg(prompt); }
+          regenModal?.classList.add("hidden");
+        };
+
+        // Particle background for login
+        initLoginParticles();
 
       } catch (err) {
         console.error("Papaleta init error:", err);
@@ -1198,8 +1281,7 @@ export default function PapaletaApp() {
 
       {/* LOGIN */}
       <div id="login" className="login-screen">
-        <div className="login-glow g1"></div>
-        <div className="login-glow g2"></div>
+        <canvas id="login-canvas" className="login-canvas"></canvas>
         <div className="login-card">
           <img src="/papaletaarriba.png" alt="Papaleta" className="lc-logo-img" />
           <h1 className="lc-title">Papaleta</h1>
@@ -1453,6 +1535,19 @@ export default function PapaletaApp() {
             </div>
           </div>
         </main>
+
+        {/* REGEN IMAGE MODAL */}
+        <div id="regen-modal" className="regen-modal-backdrop hidden">
+          <div className="regen-modal-card">
+            <h3 className="regen-modal-title">🎨 Regenerar imagen</h3>
+            <p className="regen-modal-sub">Describe mejor lo que quieres visualizar. Sé específico para mejores resultados.</p>
+            <textarea id="regen-prompt-input" className="regen-modal-input" rows={4} placeholder="Ej: A modern mobile app interface showing a coffee shop, warm lighting, flat design, no text…"></textarea>
+            <div className="regen-modal-actions">
+              <button id="btn-regen-cancel" className="regen-btn-cancel">Cancelar</button>
+              <button id="btn-regen-confirm" className="regen-btn-confirm">🎨 Generar imagen</button>
+            </div>
+          </div>
+        </div>
 
         {/* CHAT */}
         <button id="chat-fab" className="chat-fab">💬</button>

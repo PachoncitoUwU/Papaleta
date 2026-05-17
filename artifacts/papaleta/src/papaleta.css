@@ -86,19 +86,82 @@
 #papaleta-root .login-screen {
   position: fixed; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  background: var(--bg2); z-index: 100; overflow: hidden;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 40%, #f5f0ff 100%);
+  z-index: 100; overflow: hidden;
 }
-#papaleta-root .login-glow { display: none; }
+[data-theme="dark"] #papaleta-root .login-screen {
+  background: linear-gradient(135deg, #0a0a18 0%, #130a2a 50%, #0a1525 100%);
+}
+
+#papaleta-root .login-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0;
+}
 
 #papaleta-root .login-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  position: relative; z-index: 1;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--r-xl);
   padding: 44px 40px;
   width: 400px; max-width: 94vw;
-  box-shadow: var(--sh2);
-  animation: pp-pop .3s ease;
+  box-shadow: 0 8px 40px rgba(99,102,241,0.10), 0 2px 8px rgba(0,0,0,0.06);
+  animation: pp-pop .35s cubic-bezier(0.34,1.56,0.64,1);
 }
+[data-theme="dark"] #papaleta-root .login-card {
+  background: rgba(20, 18, 36, 0.78);
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* ───── REGEN MODAL ───── */
+#papaleta-root .regen-modal-backdrop {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  animation: pp-fadeUp .18s ease;
+}
+#papaleta-root .regen-modal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 32px 28px;
+  width: 460px; max-width: 94vw;
+  box-shadow: var(--sh2);
+  animation: pp-pop .22s ease;
+}
+#papaleta-root .regen-modal-title {
+  font-size: 18px; font-weight: 700; color: var(--text);
+  margin-bottom: 6px;
+}
+#papaleta-root .regen-modal-sub {
+  font-size: 13px; color: var(--text3); margin-bottom: 16px; line-height: 1.5;
+}
+#papaleta-root .regen-modal-input {
+  width: 100%; padding: 12px 14px; border-radius: var(--r);
+  border: 1.5px solid var(--border); background: var(--bg2);
+  color: var(--text); font-family: var(--font); font-size: 13px;
+  line-height: 1.6; resize: vertical; outline: none; transition: border-color var(--t);
+}
+#papaleta-root .regen-modal-input:focus { border-color: var(--primary); }
+#papaleta-root .regen-modal-actions {
+  display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end;
+}
+#papaleta-root .regen-btn-cancel {
+  padding: 10px 18px; background: var(--surface2); color: var(--text2);
+  border: 1px solid var(--border); border-radius: var(--r); font-size: 14px; font-weight: 500;
+  transition: background var(--t);
+}
+#papaleta-root .regen-btn-cancel:hover { background: var(--border2); }
+#papaleta-root .regen-btn-confirm {
+  padding: 10px 20px; background: var(--primary); color: #fff;
+  border: none; border-radius: var(--r); font-size: 14px; font-weight: 600;
+  transition: background var(--t);
+}
+#papaleta-root .regen-btn-confirm:hover { background: var(--primary-d); }
 #papaleta-root .lc-logo-img {
   width: 72px; height: 72px;
   display: block; margin: 0 auto 20px;
