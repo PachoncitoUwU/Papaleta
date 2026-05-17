@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Papaleta"
+version = "1.0.0"
+id = "artifacts/papaleta"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22734
+
+[services.development]
+run = "pnpm --filter @workspace/papaleta run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/papaleta", "run", "build" ]
+publicDir = "artifacts/papaleta/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22734"
+BASE_PATH = "/"
