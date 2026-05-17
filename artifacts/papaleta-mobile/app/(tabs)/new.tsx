@@ -123,7 +123,7 @@ export default function NewIdeaScreen() {
       const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
       const idea = {
         id,
-        uid: user?.uid || "local",
+        uid: user?.uid || "",
         title,
         tag,
         rawText: text,

@@ -21,7 +21,12 @@ export interface Idea {
 export async function loadIdeas(uid: string): Promise<Idea[]> {
   const raw = await AsyncStorage.getItem(IDEAS_KEY);
   const all: Idea[] = raw ? JSON.parse(raw) : [];
-  return all.filter((i) => i.uid === uid || i.uid === "local");
+  return all
+    .filter((i) => i.uid === uid)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 }
 
 export async function saveIdea(idea: Idea): Promise<void> {

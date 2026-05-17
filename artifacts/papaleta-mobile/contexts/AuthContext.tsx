@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, {
   createContext,
   useCallback,
@@ -6,12 +5,20 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import {
+  auth,
+  signInAnonymously,
+  firebaseSignOut,
+  onAuthStateChanged,
+  type User,
+} from "@/lib/firebase";
 
 export interface AppUser {
   uid: string;
   displayName: string;
   photoURL: string | null;
   isGuest: boolean;
+  firebaseUser: User;
 }
 
 interface AuthContextType {
@@ -28,36 +35,39 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
-const AUTH_KEY = "pp_auth_user";
+function mapFirebaseUser(u: User): AppUser {
+  return {
+    uid: u.uid,
+    displayName: u.displayName || (u.isAnonymous ? "Creador Local" : u.email || "Usuario"),
+    photoURL: u.photoURL,
+    isGuest: u.isAnonymous,
+    firebaseUser: u,
+  };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.getItem(AUTH_KEY).then((raw) => {
-      if (raw) {
-        try {
-          setUser(JSON.parse(raw));
-        } catch {}
+    const unsub = onAuthStateChanged(auth, (u) => {
+      if (u) {
+        setUser(mapFirebaseUser(u));
+      } else {
+        setUser(null);
       }
       setLoading(false);
     });
+    return unsub;
   }, []);
 
   const signInAsGuest = useCallback(async () => {
-    const guest: AppUser = {
-      uid: "local",
-      displayName: "Creador Local",
-      photoURL: null,
-      isGuest: true,
-    };
-    await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(guest));
-    setUser(guest);
+    const cred = await signInAnonymously(auth);
+    setUser(mapFirebaseUser(cred.user));
   }, []);
 
   const signOut = useCallback(async () => {
-    await AsyncStorage.removeItem(AUTH_KEY);
+    await firebaseSignOut(auth);
     setUser(null);
   }, []);
 
