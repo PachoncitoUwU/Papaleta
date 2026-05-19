@@ -10,6 +10,7 @@ declare global {
     __qn: (i: number) => void;
     __qs: (i: number) => void;
     __regen: () => void;
+    __uploadImg: () => void;
     __rmtl: (idx: number) => void;
     addKanbanCard: (col: string) => void;
     showDashboard: () => void;
@@ -393,7 +394,7 @@ export default function PapaletaApp() {
               genImg(idea.imgPrompt);
             } else if ($("hero-wrap")) {
               $("hero-wrap")!.innerHTML =
-                '<div class="hero-fallback hero-fallback-empty"><div class="hero-fallback-icon">✨</div><p class="hero-fallback-title">Sin visual aun</p><button type="button" class="hero-fallback-btn" onclick="window.__regen()">🎨 Generar</button></div>';
+                '<div class="hero-fallback hero-fallback-empty"><div class="hero-fallback-icon">✨</div><p class="hero-fallback-title">Sin visual aun</p><button type="button" class="hero-fallback-btn" onclick="window.__regen()">🎨 Generar</button><button type="button" class="hero-fallback-btn" onclick="window.__uploadImg()" style="margin-left:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);">🖼️ Subir</button></div>';
             }
             if (idea.kanban) loadKanban(idea.kanban);
             renderTL(idea.timeline || []);
@@ -528,12 +529,14 @@ export default function PapaletaApp() {
             if ($("idea-title")) $("idea-title")!.textContent = d.title || "Idea";
             if ($("idea-tag")) $("idea-tag")!.textContent = d.tag || "Idea";
             if ($("master-doc")) $("master-doc")!.innerHTML = d.doc || "";
-            ["k-todo", "k-doing", "k-done"].forEach((id) => { const el = $(id); if (el) el.innerHTML = ""; });
-            (d.roadmap || []).forEach((t: string) => makeCard(t, "k-todo"));
-            lastImgPrompt = d.imgPrompt || d.title;
-            genImg(lastImgPrompt);
             d.rawText = text;
             await saveNew(d);
+            ["k-todo", "k-doing", "k-done"].forEach((id) => { const el = $(id); if (el) el.innerHTML = ""; });
+            (d.roadmap || []).forEach((t: string) => makeCard(t, "k-todo"));
+            saveKanban();
+            calcPct();
+            lastImgPrompt = d.imgPrompt || d.title;
+            genImg(lastImgPrompt);
             logAct();
             toast("✅ ¡Idea analizada!");
           } catch (e: any) {
@@ -541,12 +544,14 @@ export default function PapaletaApp() {
             if ($("idea-title")) $("idea-title")!.textContent = d.title;
             if ($("idea-tag")) $("idea-tag")!.textContent = d.tag;
             if ($("master-doc")) $("master-doc")!.innerHTML = d.doc;
-            ["k-todo", "k-doing", "k-done"].forEach((id) => { const el = $(id); if (el) el.innerHTML = ""; });
-            d.roadmap.forEach((t: string) => makeCard(t, "k-todo"));
-            lastImgPrompt = d.imgPrompt;
-            genImg(lastImgPrompt);
             d.rawText = text;
             await saveNew(d);
+            ["k-todo", "k-doing", "k-done"].forEach((id) => { const el = $(id); if (el) el.innerHTML = ""; });
+            d.roadmap.forEach((t: string) => makeCard(t, "k-todo"));
+            saveKanban();
+            calcPct();
+            lastImgPrompt = d.imgPrompt;
+            genImg(lastImgPrompt);
             logAct();
             toast("✅ Idea creada en modo gratis local");
           }
@@ -642,7 +647,7 @@ export default function PapaletaApp() {
         function buildPollinationsUrl(prompt: string, width: number, height: number, model: string) {
           const seed = Math.floor(Math.random() * 9999999);
           const enc = encodeURIComponent(prompt.slice(0, 280));
-          const params = `?width=${width}&height=${height}&seed=${seed}&model=${model}`;
+          const params = `?width=${width}&height=${height}&seed=${seed}&nologo=true`;
           const isLocal = location.hostname === "localhost" || location.hostname === "127.0.0.1";
           const base = isLocal ? `/pollinations-img/${enc}` : `https://image.pollinations.ai/prompt/${enc}`;
           return base + params;
@@ -674,9 +679,8 @@ export default function PapaletaApp() {
 
         async function loadGeneratedImage(prompt: string, onload: (src: string) => void, onerror: (err: string) => void, width = 1024, height = 576) {
           const attempts = [
-            { model: "flux", timeout: 90000 },
-            { model: "turbo", timeout: 60000 },
-            { model: "flux-realism", timeout: 90000 },
+            { model: "default", timeout: 45000 },
+            { model: "backup", timeout: 45000 },
           ];
           let lastErr: any;
           for (const { model, timeout } of attempts) {
@@ -701,6 +705,31 @@ export default function PapaletaApp() {
           img.src = src;
           w.innerHTML = "";
           w.appendChild(img);
+          
+          // Custom Upload Button
+          const btnUpload = document.createElement("button");
+          btnUpload.className = "hero-btn-upload";
+          btnUpload.innerHTML = "🖼️ Subir imagen";
+          btnUpload.style.cssText = "position:absolute;bottom:16px;right:16px;padding:8px 16px;background:rgba(0,0,0,0.6);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);display:flex;align-items:center;gap:6px;";
+          btnUpload.onclick = () => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "image/*";
+            input.onchange = (e) => {
+              const file = (e.target as HTMLInputElement).files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                  const b64 = re.target?.result as string;
+                  showHeroImg(w, b64);
+                };
+                reader.readAsDataURL(file);
+              }
+            };
+            input.click();
+          };
+          w.appendChild(btnUpload);
+
           if (ideaId) sF("imgUrl", src);
         }
 
@@ -1172,6 +1201,26 @@ export default function PapaletaApp() {
 
           const btnRegenImg = $("btn-regen-img");
           if (btnRegenImg) btnRegenImg.onclick = () => lastImgPrompt && genImg(lastImgPrompt);
+          
+          window.__uploadImg = () => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "image/*";
+            input.onchange = (e) => {
+              const file = (e.target as HTMLInputElement).files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                  const b64 = re.target?.result as string;
+                  const w = $("hero-wrap");
+                  if (w) showHeroImg(w, b64);
+                };
+                reader.readAsDataURL(file);
+              }
+            };
+            input.click();
+          };
+
           const ideaTitle = $("idea-title");
           if (ideaTitle) ideaTitle.addEventListener("blur", () => sF("title", ideaTitle.textContent?.trim()));
           const masterDoc = $("master-doc");
@@ -1259,7 +1308,7 @@ export default function PapaletaApp() {
       {/* LOGIN */}
       <div id="login" className="login-screen">
         <DottedSurface />
-        <div className="login-card" style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 20, padding: 36, maxWidth: 400, width: "100%", zIndex: 2, position: "relative" }}>
+        <div className="login-card" style={{ background: "rgba(255,255,255,0.02)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 24, padding: "48px 28px", maxWidth: 340, width: "100%", zIndex: 2, position: "relative" }}>
           <img src="/papaletaarriba.png" alt="Papaleta" className="lc-logo-img" />
           <h1 className="lc-title">Papaleta</h1>
           <p className="lc-sub">Tu laboratorio de ideas con IA</p>
