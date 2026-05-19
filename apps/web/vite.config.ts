@@ -52,6 +52,14 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    proxy: {
+      "/pollinations-img": {
+        target: "https://image.pollinations.ai",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/pollinations-img/, "/prompt"),
+        secure: true,
+      },
+    },
   },
   preview: {
     port,

@@ -738,51 +738,73 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           return "";
         }
 
-        function pollinationsPublicUrl(prompt: string, width: number, height: number) {
+        function buildPollinationsUrl(prompt: string, width: number, height: number, model: string) {
           const seed = Math.floor(Math.random() * 9999999);
-          const enc = encodeURIComponent(prompt.slice(0, 300));
-          return `https://image.pollinations.ai/prompt/${enc}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
+          // nologo=true is a PAID feature — causes 403 without auth
+          const enc = encodeURIComponent(prompt.slice(0, 280));
+          const params = `?width=${width}&height=${height}&seed=${seed}&model=${model}`;
+          // In local dev, use the Vite proxy to avoid CORS 403
+          const isLocal = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+          const base = isLocal
+            ? `/pollinations-img/${enc}`
+            : `https://image.pollinations.ai/prompt/${enc}`;
+          return base + params;
         }
 
-        function pollinationsLegacyUrl(prompt: string, width: number, height: number) {
-          const enc = encodeURIComponent(prompt.slice(0, 300));
-          return `https://image.pollinations.ai/prompt/${enc}?width=${width}&height=${height}&nologo=true&model=turbo`;
-        }
+        function loadImageViaFetch(url: string, timeoutMs: number): Promise<string> {
+          return new Promise((resolve, reject) => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => { controller.abort(); reject(new Error("timeout")); }, timeoutMs);
 
-        function loadImageUrlWithTimeout(url: string, ms: number) {
-          return new Promise<string>((resolve, reject) => {
-            const img = new Image();
-            let finished = false;
-            const timeout = setTimeout(() => { if (finished) return; finished = true; reject(new Error("timeout")); }, ms);
-            img.onload = () => { if (finished) return; finished = true; clearTimeout(timeout); resolve(url); };
-            img.onerror = () => { if (finished) return; finished = true; clearTimeout(timeout); reject(new Error("No se pudo cargar la imagen")); };
-            img.src = url;
+            fetch(url, { signal: controller.signal, referrerPolicy: "no-referrer" })
+              .then(res => {
+                clearTimeout(timer);
+                console.log(`[Papaleta IMG] ${res.status} — ${url.slice(0, 80)}…`);
+                if (!res.ok) reject(new Error(`HTTP ${res.status}`));
+                else return res.blob();
+              })
+              .then(blob => {
+                if (!blob) return;
+                resolve(URL.createObjectURL(blob));
+              })
+              .catch(err => {
+                clearTimeout(timer);
+                if (err.name === "AbortError") reject(new Error("timeout"));
+                else reject(err);
+              });
           });
         }
 
         function friendlyImageError(err: any) {
           const msg = err?.message || String(err || "");
-          if (/401|invalid|unauthorized/i.test(msg)) return "La key de Pollinations no es válida.";
-          if (/402|balance|payment/i.test(msg)) return "La key no tiene saldo disponible.";
-          if (/timeout/i.test(msg)) return "El generador tardó demasiado. Puedes reintentar.";
-          return "No se pudo generar la imagen.";
+          console.warn("[Papaleta IMG] Error:", msg);
+          if (/timeout/i.test(msg)) return "El generador tardó demasiado. Intenta de nuevo.";
+          if (/403/i.test(msg)) return "El servidor bloqueó la petición (403). Inténtalo de nuevo.";
+          if (/401/i.test(msg)) return "No autorizado (401). Verifica la configuración.";
+          return "No se pudo generar la imagen. Intenta de nuevo.";
         }
 
         async function loadGeneratedImage(prompt: string, onload: (src: string) => void, onerror: (err: string) => void, width = 1024, height = 576) {
-          const key = getImageApiKey();
-          try {
-            // Intentar con URL pública flux primero (120s timeout)
-            const src = await loadImageUrlWithTimeout(pollinationsPublicUrl(prompt, width, height), 120000);
-            onload(src);
-          } catch (e) {
+          const attempts = [
+            { model: "flux",  timeout: 90000 },
+            { model: "turbo", timeout: 60000 },
+            { model: "flux-realism", timeout: 90000 },
+          ];
+          let lastErr: any;
+          for (const { model, timeout } of attempts) {
+            const url = buildPollinationsUrl(prompt, width, height, model);
+            console.log(`[Papaleta IMG] Intentando modelo "${model}"…`);
             try {
-              // Fallback a modelo turbo (60s timeout)
-              const src = await loadImageUrlWithTimeout(pollinationsLegacyUrl(prompt, width, height), 60000);
+              const src = await loadImageViaFetch(url, timeout);
+              console.log("[Papaleta IMG] ✅ Imagen generada:", src.slice(0, 60));
               onload(src);
-            } catch (e2) {
-              onerror(friendlyImageError(e2 || e));
+              return;
+            } catch (e) {
+              console.warn(`[Papaleta IMG] Modelo "${model}" falló:`, (e as any)?.message);
+              lastErr = e;
             }
           }
+          onerror(friendlyImageError(lastErr));
         }
 
         function showHeroImg(w: HTMLElement, src: string) {
