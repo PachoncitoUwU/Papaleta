@@ -927,9 +927,9 @@ export default function PapaletaApp() {
             inner += `</div></div>`;
             container.innerHTML = inner;
           } else if (count > 0) {
-            container.innerHTML = `<div style="text-align:center;"><div style="font-size:28px;margin-bottom:10px;">\ud83d\udc7b</div><p style="font-size:13px;color:var(--text2);">${count} acciones el ${dStr}, pero sin cambios en ideas.</p></div>`;
+            container.innerHTML = `<div style="text-align:center;"><div style="font-size:28px;margin-bottom:10px;">👻</div><p style="font-size:13px;color:var(--text2);">${count} acciones el ${dStr}, pero sin cambios en ideas.</p></div>`;
           } else {
-            container.innerHTML = `<div style="text-align:center;"><div style="font-size:28px;margin-bottom:10px;opacity:0.4;">\ud83d\udca4</div><p style="font-size:13px;color:var(--text3);">Sin actividad el ${dStr}</p></div>`;
+            container.innerHTML = `<div style="text-align:center;"><div style="font-size:28px;margin-bottom:10px;opacity:0.4;">💤</div><p style="font-size:13px;color:var(--text3);">Sin actividad el ${dStr}</p></div>`;
           }
         };
 
@@ -1264,10 +1264,10 @@ export default function PapaletaApp() {
           <h1 className="lc-title">Papaleta</h1>
           <p className="lc-sub">Tu laboratorio de ideas con IA</p>
           <div className="lc-features">
-            <div className="lcf">\ud83d\udd0d Analiza con preguntas inteligentes</div>
-            <div className="lcf">\u2728 Potencia y estructura con IA</div>
-            <div className="lcf">\ud83d\uddc2\ufe0f Kanban interactivo</div>
-            <div className="lcf">\ud83d\udcf8 Bitacora visual de avances</div>
+            <div className="lcf">🔍 Analiza con preguntas inteligentes</div>
+            <div className="lcf">✨ Potencia y estructura con IA</div>
+            <div className="lcf">🗂️ Kanban interactivo</div>
+            <div className="lcf">📸 Bitacora visual de avances</div>
           </div>
           <button id="btn-login" className="btn-google">
             <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.07 5.07 0 01-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09a6.97 6.97 0 010-4.18V7.07H2.18A11 11 0 001 12c0 1.78.43 3.45 1.18 4.93l3.66-2.84z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
@@ -1281,22 +1281,22 @@ export default function PapaletaApp() {
       {/* APP */}
       <div id="app" className="app hidden">
         <div className="mobile-topbar">
-          <button id="btn-hamburger" className="icon-btn">\u2630</button>
+          <button id="btn-hamburger" className="icon-btn">☰</button>
           <span className="mt-logo"><img src="/papaletaLogok.png" alt="Papaleta" className="mt-logo-img" /> Papaleta</span>
           <button className="icon-btn" onClick={() => document.getElementById("btn-new")?.click()}>+</button>
         </div>
 
         <aside id="sidebar" className="sidebar">
           <div className="sb-header">
-            <a href="#" onClick={(e) => { e.preventDefault(); window.showDashboard?.(); }} className="sb-logo-link">
+            <a href="#" onClick={(e) => { e.preventDefault(); window.showDashboard?.(); }} className="sb-logo-link" style={{ color: 'white', textDecoration: 'none' }}>
               <img src="/papaletaarriba.png" alt="Papaleta" className="sb-logo-img" />
               <span className="sb-logo-text">Papaleta</span>
             </a>
-            <button id="btn-collapse" className="icon-btn" title="Colapsar">\u2039</button>
+            <button id="btn-collapse" className="icon-btn" title="Colapsar">‹</button>
           </div>
           <button id="btn-new" className="btn-new"><span>+</span> Nueva Idea</button>
           <div className="sb-section-label">MIS IDEAS</div>
-          <div id="ideas-nav" className="ideas-nav"><div className="empty-nav">Crea tu primera idea \u2728</div></div>
+          <div id="ideas-nav" className="ideas-nav"><div className="empty-nav">Crea tu primera idea ✨</div></div>
           <div className="sb-footer">
             <button id="btn-dark-mode" className="btn-dark-mode" title="Cambiar tema">
               <svg className="theme-toggle-svg" width="20" height="20" viewBox="0 0 25 25" fill="none">
@@ -1315,8 +1315,8 @@ export default function PapaletaApp() {
               </svg>
             </button>
             <div id="uavatar" className="u-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}></div>
-            <span id="uname" className="u-name">\u2014</span>
-            <button id="btn-logout" className="icon-btn" title="Salir">\u21e5</button>
+            <span id="uname" className="u-name">—</span>
+            <button id="btn-logout" className="icon-btn" title="Salir">⇥</button>
           </div>
         </aside>
 
@@ -1326,15 +1326,15 @@ export default function PapaletaApp() {
             <div className="dash-profile-header">
               <div id="user-profile-pic" className="user-profile-pic"><div className="profile-initials">U</div></div>
               <div>
-                <h1 id="user-greeting" className="user-greeting">Hola Usuario, \u00bfque ideas tienes hoy?</h1>
+                <h1 id="user-greeting" className="user-greeting">Hola Usuario, ¿qué ideas tienes hoy?</h1>
                 <p style={{ fontSize: 15, color: "var(--text2)", marginTop: 4 }}>Tu Laboratorio de Ideas</p>
               </div>
             </div>
             <div className="dash-stats-grid">
-              <div className="stat-card"><div className="stat-icon">\ud83d\udca1</div><div className="stat-value" id="stat-total">0</div><div className="stat-label">Ideas Creadas</div></div>
-              <div className="stat-card"><div className="stat-icon">\u26a1</div><div className="stat-value" id="stat-progress">0</div><div className="stat-label">En Progreso</div></div>
-              <div className="stat-card"><div className="stat-icon">\u2705</div><div className="stat-value" id="stat-completed">0</div><div className="stat-label">Completadas</div></div>
-              <div className="stat-card"><div className="stat-icon">\ud83d\udd25</div><div className="stat-value" id="stat-streak">0</div><div className="stat-label">Dias Seguidos</div></div>
+              <div className="stat-card"><div className="stat-icon">💡</div><div className="stat-value" id="stat-total">0</div><div className="stat-label">Ideas Creadas</div></div>
+              <div className="stat-card"><div className="stat-icon">⚡</div><div className="stat-value" id="stat-progress">0</div><div className="stat-label">En Progreso</div></div>
+              <div className="stat-card"><div className="stat-icon">✅</div><div className="stat-value" id="stat-completed">0</div><div className="stat-label">Completadas</div></div>
+              <div className="stat-card"><div className="stat-icon">🔥</div><div className="stat-value" id="stat-streak">0</div><div className="stat-label">Dias Seguidos</div></div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: 28 }}>
               <div className="dash-heatmap-card">

@@ -120,7 +120,8 @@ export function DottedSurface({ className, ...props }: DottedSurfaceProps) {
   return (
     <div
       ref={containerRef}
-      className={cn("pointer-events-none fixed inset-0 z-0", className)}
+      className={className}
+      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}
       aria-hidden
       {...props}
     />
