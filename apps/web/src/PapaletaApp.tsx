@@ -982,26 +982,23 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           
           const dayNames = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
           
-          let html = `<div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <div style="font-size:14px; font-weight:600; text-transform:capitalize;">${monthName}, ${currentYear}</div>
-            <div style="font-size:11px; color:var(--text3); display:flex; align-items:center; gap:6px;">
+          let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div style="font-size:14px;font-weight:600;text-transform:capitalize;">${monthName}, ${currentYear}</div>
+            <div style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px;">
                <div style="width:8px;height:8px;border-radius:4px;background:var(--primary);"></div> Días activos
             </div>
           </div>`;
           
-          html += `<div style="display:grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; max-width: 400px; margin: 0 auto;">`;
+          html += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center;max-width:400px;margin:0 auto;">`;
           
-          // Header
           dayNames.forEach(day => {
-            html += `<div style="font-size: 10px; font-weight: 600; color: var(--text3); margin-bottom: 4px;">${day}</div>`;
+            html += `<div style="font-size:10px;font-weight:600;color:var(--text3);margin-bottom:4px;">${day}</div>`;
           });
           
-          // Empty days at start
           for(let i = 0; i < firstDayOfWeek; i++) {
             html += `<div></div>`;
           }
           
-          // Days
           for(let d = 1; d <= daysInMonth; d++) {
             const date = new Date(currentYear, currentMonth, d);
             const k = date.toISOString().slice(0, 10);
@@ -1022,65 +1019,47 @@ IDEA DEL USUARIO: ${text}${ctx}`,
             }
             
             if (isToday) border = "2px solid var(--primary)";
-            
-            const clickHandler = `
-              const dStr = '${date.toLocaleDateString("es", {day:"numeric", month:"long", year:"numeric"})}';
-              const idz = JSON.parse(localStorage.getItem('pp_ideas') || '[]');
-              const acts = idz.filter(i => new Date(i.updatedAt).toDateString() === '${date.toDateString()}');
-              
-              const container = document.getElementById('day-activity-content');
-              if (!container) return;
-              
-              if (acts.length > 0) {
-                let html = '<div style="width:100%; text-align:left; overflow-y:auto; max-height:200px; padding-right:8px;">';
-                html += '<h4 style="font-size:13px; color:var(--text3); margin-bottom:12px; font-weight:600; text-transform:uppercase;">' + dStr + '</h4>';
-                html += '<div style="display:flex; flex-direction:column; gap:8px;">';
-                acts.forEach(a => {
-                  html += '<div style="display:flex; align-items:center; gap:12px; padding:12px; background:var(--bg2); border-radius:8px; border:1px solid var(--border); cursor:pointer;" onclick="window.__loadIdea(\\'' + a.id + '\\')">';
-                  if (a.heroImg) {
-                    html += '<img src="' + a.heroImg + '" style="width:40px; height:40px; border-radius:6px; object-fit:cover;" />';
-                  } else {
-                    html += '<div style="width:40px; height:40px; border-radius:6px; background:var(--primary-l); color:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px;">' + (a.title ? a.title.charAt(0).toUpperCase() : 'I') + '</div>';
-                  }
-                  html += '<div style="flex:1; min-width:0; text-align:left;">';
-                  html += '<div style="font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + (a.title || 'Idea') + '</div>';
-                  html += '<div style="font-size:12px; color:var(--text3); margin-top:2px;">' + (a.tag || 'Idea') + ' • ' + (a.progress || 0) + '% completado</div>';
-                  html += '</div></div>';
-                });
-                html += '</div></div>';
-                container.innerHTML = html;
-              } else if (${c} > 0) {
-                container.innerHTML = '<div style="font-size:32px; margin-bottom:16px; opacity:0.8;">👻</div><p style="font-size:15px; font-weight:500; color:var(--text);">Registraste ' + ${c} + ' acciones el ' + dStr + ', pero no hubo modificaciones en ideas.</p>';
-              } else {
-                container.innerHTML = '<div style="font-size:32px; margin-bottom:16px; opacity:0.5; filter:grayscale(1);">💤</div><p style="font-size:15px; font-weight:500; color:var(--text3);">No hay actividad registrada para el ' + dStr + '.</p>';
-              }
-            `.replace(/\n/g, "").replace(/\s+/g, " ");
 
-            html += `<div style="
-              aspect-ratio: 1;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              border-radius: 8px;
-              font-size: 12px;
-              font-weight: 500;
-              background: ${bg};
-              color: ${color};
-              border: ${border};
-              box-shadow: ${shadow};
-              cursor: pointer;
-              transition: transform 0.2s;
-            " title="${c} acciones" onclick="${clickHandler}" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-              ${d}
-            </div>`;
+            html += `<div data-daykey="${k}" data-daycount="${c}" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:12px;font-weight:500;background:${bg};color:${color};border:${border};box-shadow:${shadow};cursor:pointer;transition:transform 0.2s;" title="${c} acciones" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" onclick="window.__dayClick(this.dataset.daykey,+this.dataset.daycount)">${d}</div>`;
           }
-          
+
           html += `</div>`;
           hm.innerHTML = html;
-          
-          const ml = document.querySelectorAll(".dhc-months, .dhc-days, .dhc-range, .dhc-legend");
-          ml.forEach(el => (el as HTMLElement).style.display = "none");
+
+          document.querySelectorAll(".dhc-months,.dhc-days,.dhc-range,.dhc-legend")
+            .forEach(el => (el as HTMLElement).style.display = "none");
         }
+
+        (window as any).__dayClick = (dateKey: string, count: number) => {
+          const container = document.getElementById("day-activity-content");
+          if (!container) return;
+          const date = new Date(dateKey + "T12:00:00");
+          const dStr = date.toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
+          const allIdeas: any[] = JSON.parse(localStorage.getItem("pp_ideas") || "[]");
+          const acts = allIdeas.filter(i => i.updatedAt && new Date(i.updatedAt).toDateString() === date.toDateString());
+
+          if (acts.length > 0) {
+            let inner = `<div style="width:100%;text-align:left;overflow-y:auto;max-height:220px;padding-right:8px;">`;
+            inner += `<h4 style="font-size:12px;color:var(--text3);margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">${dStr}</h4>`;
+            inner += `<div style="display:flex;flex-direction:column;gap:8px;">`;
+            for (const a of acts) {
+              const initials = a.title ? a.title.charAt(0).toUpperCase() : "I";
+              const thumb = a.heroImg
+                ? `<img src="${a.heroImg}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;flex-shrink:0;">`
+                : `<div style="width:40px;height:40px;border-radius:6px;background:var(--primary-l);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;">${initials}</div>`;
+              inner += `<div onclick="window.__loadIdea('${a.id}')" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);cursor:pointer;">`;
+              inner += thumb;
+              inner += `<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.title || "Idea"}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.tag || "Idea"} · ${a.progress || 0}% completado</div></div>`;
+              inner += `</div>`;
+            }
+            inner += `</div></div>`;
+            container.innerHTML = inner;
+          } else if (count > 0) {
+            container.innerHTML = `<div style="font-size:32px;margin-bottom:16px;opacity:0.8;">👻</div><p style="font-size:15px;font-weight:500;color:var(--text);">Registraste ${count} acciones el ${dStr}, pero sin modificaciones en ideas.</p>`;
+          } else {
+            container.innerHTML = `<div style="font-size:32px;margin-bottom:16px;opacity:0.5;filter:grayscale(1);">💤</div><p style="font-size:15px;font-weight:500;color:var(--text3);">Sin actividad registrada para el ${dStr}.</p>`;
+          }
+        };
 
 
         // DARK MODE
