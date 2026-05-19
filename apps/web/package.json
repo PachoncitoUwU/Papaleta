@@ -75,6 +75,7 @@
     "zod": "catalog:"
   },
   "dependencies": {
-    "firebase": "^12.13.0"
+    "firebase": "^12.13.0",
+    "three": "^0.184.0"
   }
 }

@@ -1,7 +1,8 @@
-
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "./papaleta.css";
 import { DottedSurface } from "./components/ui/dotted-surface";
+import { ThemeToggle } from "./components/ThemeToggle";
+import { BGPattern } from "./components/bg-pattern";
 
 declare global {
   interface Window {
@@ -22,6 +23,8 @@ declare global {
 }
 
 export default function PapaletaApp() {
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
+
   useEffect(() => {
     // Dynamically import Firebase and initialize the app
     const initApp = async () => {
@@ -59,9 +62,25 @@ export default function PapaletaApp() {
         };
 
         const GK = () =>
+          (import.meta as any).env?.VITE_GROQ_API_KEY ||
           (window as any).GROQ_API_KEY ||
           localStorage.getItem("pp_groq_key") ||
           "";
+        const useGroqProxy = () => {
+          if (typeof location === "undefined") return false;
+          if (
+            location.hostname.includes("netlify.app") ||
+            location.hostname.includes("netlify.live")
+          )
+            return true;
+          if (
+            import.meta.env.DEV &&
+            (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+          )
+            return true;
+          return false;
+        };
+        let chatHistory: { role: string; content: string }[] = [];
         const fbApp = initializeApp(FB);
         const auth = getAuth(fbApp);
         const db = getFirestore(fbApp);
@@ -101,6 +120,26 @@ export default function PapaletaApp() {
 
         const IMG_API_KEY_STORAGE = "pp_pollinations_key";
 
+        const PAPALETA_AVANCE_PROMPT = `Eres el Asistente de IA de "Papaleta", un laboratorio y gestor de ideas donde los usuarios registran proyectos, avances y bitácoras. Actúa como copiloto de innovación y documentación técnica.
+
+Cuando el usuario proporcione texto de avance, bitácora o estado del proyecto, responde SIEMPRE con esta estructura en Markdown:
+
+### 📝 Mini-Resumen de Avance
+[Resumen de máximo 2 o 3 líneas: logro principal y estado actual].
+
+### 🎯 Estado de la Idea
+* **Progreso estimado:** [0-100%]
+* **Enfoque actual:** [una frase corta]
+
+### 🚀 Próximos Pasos Sugeridos
+1. [Acción inmediata]
+2. [Validación o prueba]
+
+### ⚠️ Riesgos u Obstáculos detectados
+* [Riesgo o "Ninguno relevante por ahora"]
+
+REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Viñetas y negritas para escaneo rápido.`;
+
         const toast = (m: string, ms = 3000) => {
           let t = document.getElementById("papaleta-toast");
           if (!t) {
@@ -118,7 +157,6 @@ export default function PapaletaApp() {
 
         async function aiCall(prompt: string, img: string | null = null) {
           const key = GK();
-          if (!key) throw new Error("No Groq API key configured");
           const model = img
             ? "meta-llama/llama-4-scout-17b-16e-instruct"
             : "llama-3.3-70b-versatile";
@@ -131,26 +169,101 @@ export default function PapaletaApp() {
                 { type: "text", text: prompt },
               ]
             : prompt;
-          const r = await fetch(
-            "https://api.groq.com/openai/v1/chat/completions",
-            {
+          const payload = { model, messages: [{ role: "user", content }], temperature: 0.7, max_tokens: 2048 };
+          let r: Response;
+          if (key) {
+            r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + key,
-              },
-              body: JSON.stringify({
-                model,
-                messages: [{ role: "user", content }],
-                temperature: 0.7,
-                max_tokens: 2048,
-              }),
-            }
-          );
-          if (!r.ok) throw new Error((await r.json()).error?.message || "HTTP " + r.status);
+              headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+              body: JSON.stringify(payload),
+            });
+          } else if (useGroqProxy()) {
+            r = await fetch("/.netlify/functions/groq", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+          } else {
+            throw new Error(
+              "IA no disponible. Crea apps/web/.env.local con VITE_GROQ_API_KEY=tu_clave (https://console.groq.com). En Netlify usa GROQ_API_KEY."
+            );
+          }
+          if (!r.ok) {
+            let err = "HTTP " + r.status;
+            try { err = (await r.json()).error?.message || err; } catch (e) {}
+            throw new Error(err);
+          }
           return (await r.json()).choices?.[0]?.message?.content || "";
         }
 
+        async function webSearch(query: string) {
+          try {
+            const r = await fetch(`/.netlify/functions/web-search?q=${encodeURIComponent(query)}`);
+            if (!r.ok) return "";
+            const data = await r.json();
+            return (data.results || []).map((x: any, i: number) => `${i + 1}. ${x.title}: ${x.text}`).join("\n");
+          } catch (e) { return ""; }
+        }
+        function getKanbanState() {
+          const g = (id: string) => [...($(id)?.querySelectorAll(".k-card") || [])].map((c) => (c.textContent || "").trim()).filter(Boolean);
+          return { todo: g("k-todo"), doing: g("k-doing"), done: g("k-done") };
+        }
+        function normalizeRoadmap(roadmap: unknown): string[] {
+          if (!Array.isArray(roadmap)) return [];
+          return roadmap.map((t) => String(t || "").trim()).filter((t) => t.length > 2).slice(0, 12);
+        }
+        function parseMiniResumen(md: string) {
+          const m = md.match(/### 📝 Mini-Resumen de Avance\s*\n+([\s\S]*?)(?=\n###|$)/i);
+          return (m ? m[1] : md).trim().slice(0, 600);
+        }
+        function buildSummarySource(idea: any) {
+          const tl = (idea.timeline || [])
+            .map((e: any) => `${e.date || ""}: ${e.desc || "Avance visual"}`)
+            .join("\n");
+          const doc = String(idea.doc || "")
+            .replace(/<[^>]+>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 2800);
+          return `Título: ${idea.title || "Idea"}\nProgreso: ${idea.progress || 0}%\nEtiqueta: ${idea.tag || ""}\n\nDocumento:\n${doc}\n\nBitácora:\n${tl || "(sin entradas aún)"}`;
+        }
+        async function generateAiSummary(sourceText: string) {
+          const raw = await aiCall(`${PAPALETA_AVANCE_PROMPT}\n\n---\nCONTENIDO DEL PROYECTO:\n${sourceText}`);
+          return { mini: parseMiniResumen(raw), full: raw };
+        }
+        function renderAiSummary(idea: any) {
+          const sec = $("ai-summary-section");
+          const view = $("ai-summary-view");
+          const edit = $("ai-summary-edit") as HTMLTextAreaElement;
+          if (!sec || !view || !edit) return;
+          if (!idea?.doc) {
+            sec.classList.add("hidden");
+            return;
+          }
+          sec.classList.remove("hidden");
+          const mini =
+            idea.aiSummary ||
+            "Aún no hay resumen. Pulsa «Regenerar resumen» o añade avances en la bitácora.";
+          view.textContent = mini;
+          view.classList.remove("hidden");
+          edit.classList.add("hidden");
+          edit.value = mini;
+          $("btn-save-summary")?.classList.add("hidden");
+        }
+        async function refreshIdeaSummary(opts?: { silent?: boolean }) {
+          if (!ideaId) return;
+          const idea = ideas.find((i) => i.id === ideaId);
+          if (!idea?.doc) return;
+          const source = buildSummarySource(idea);
+          if (source.length < 50) return;
+          try {
+            if (!opts?.silent) toast("🤖 Generando resumen de IA…", 5000);
+            const { mini, full } = await generateAiSummary(source);
+            await sF("aiSummary", mini);
+            await sF("aiSummaryFull", full);
+            ideas = JSON.parse(localStorage.getItem("pp_ideas") || "[]");
+            renderAiSummary(ideas.find((i) => i.id === ideaId));
+            if (!opts?.silent) toast("✅ Resumen guardado");
+          } catch (e: any) {
+            if (!opts?.silent) toast("❌ " + e.message);
+          }
+        }
         function updateUserProfile(u: any) {
           const firstName = u.displayName?.split(" ")[0] || "Usuario";
           const initials =
@@ -172,6 +285,8 @@ export default function PapaletaApp() {
               profilePic.innerHTML = `<div class="profile-initials">${initials}</div>`;
             }
           }
+          const badge = $("sb-session-badge");
+          if (badge) badge.textContent = u.uid === "local" ? "● Sesión local" : "● Sesión activa";
         }
 
         function showDashboard() {
@@ -214,8 +329,8 @@ export default function PapaletaApp() {
             grid.innerHTML = `<div class="ideas-empty"><div class="ie-icon">✨</div><p class="ie-text">Aún no has creado ninguna idea.<br>¡Empieza ahora y potencia tus proyectos con IA!</p><button class="btn-primary" onclick="document.getElementById('btn-new').click()"><span>+</span> Crear Primera Idea</button></div>`;
             return;
           }
-          const recentIdeas = ideas.slice(0, 10);
-          grid.innerHTML = recentIdeas
+          const sorted = [...ideas].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+          grid.innerHTML = sorted
             .map((idea) => {
               const date = idea.createdAt
                 ? new Date(idea.createdAt).toLocaleDateString("es", {
@@ -223,8 +338,15 @@ export default function PapaletaApp() {
                     month: "short",
                   })
                 : "Hoy";
+              const pct = idea.progress || 0;
+              const done = pct >= 100;
+              const status = done
+                ? '<span class="ic-status ic-status-done">Completada</span>'
+                : pct > 0
+                  ? '<span class="ic-status ic-status-progress">En progreso</span>'
+                  : "";
               const hasImage = idea.imgPrompt || idea.imgUrl;
-              return `<div class="idea-card" onclick="window.__ld('${idea.id}')"><div class="ic-image">${hasImage ? `<img src="${idea.imgUrl || "https://picsum.photos/seed/" + idea.id + "/280/160"}" alt="${idea.title || "Idea"}"/>` : `<div class="ic-image-placeholder">💡</div>`}</div><div class="ic-body"><div class="ic-header"><span class="ic-tag">${idea.tag || "Idea"}</span><span class="ic-progress">${idea.progress || 0}%</span></div><h3 class="ic-title">${idea.title || "Sin título"}</h3><div class="ic-date">${date}</div></div></div>`;
+              return `<div class="idea-card${done ? " idea-card-done" : ""}" onclick="window.__ld('${idea.id}')"><div class="ic-image">${hasImage || idea.imgUrl ? `<img src="${idea.imgUrl || "https://picsum.photos/seed/" + idea.id + "/400/192"}" alt="${idea.title || "Idea"}" loading="lazy" onerror="this.onerror=null;this.parentElement.innerHTML='<div class="ic-image-placeholder">💡</div>'"/>` : `<div class="ic-image-placeholder">💡</div>`}</div><div class="ic-body">${status}<div class="ic-header"><span class="ic-tag">${idea.tag || "Idea"}</span><span class="ic-progress">${pct}%</span></div><h3 class="ic-title">${idea.title || "Sin título"}</h3><div class="ic-date">${date}</div></div></div>`;
             })
             .join("");
         }
@@ -284,15 +406,17 @@ export default function PapaletaApp() {
             doc: data.doc || "",
             imgPrompt: data.imgPrompt || "",
             imgUrl: data.imgUrl || "",
-            kanban: { todo: [], doing: [], done: [] },
-            timeline: [],
-            progress: 0,
+            kanban: data.kanban || getKanbanState(),
+            timeline: data.timeline || [],
+            progress: typeof data.progress === "number" ? data.progress : 0,
+            aiSummary: data.aiSummary || "",
+            aiSummaryFull: data.aiSummaryFull || "",
             createdAt: new Date().toISOString(),
           };
           const local = JSON.parse(localStorage.getItem("pp_ideas") || "[]");
           if (ideaId) {
             const ix = local.findIndex((i: any) => i.id === ideaId);
-            if (ix >= 0) local[ix] = { ...local[ix], ...p };
+            if (ix >= 0) local[ix] = { ...local[ix], ...p, createdAt: local[ix].createdAt || p.createdAt };
             else local.unshift({ id: ideaId, ...p });
           } else {
             ideaId = "l_" + Date.now();
@@ -369,10 +493,11 @@ export default function PapaletaApp() {
               genImg(idea.imgPrompt);
             } else if ($("hero-wrap")) {
               $("hero-wrap")!.innerHTML =
-                '<div class="hero-no-img">Sin imagen<br><button onclick="window.__regen()">🎨 Generar</button></div>';
+                '<div class="hero-fallback hero-fallback-empty"><div class="hero-fallback-icon">✦</div><p class="hero-fallback-title">Sin visual aún</p><button type="button" class="hero-fallback-btn" onclick="window.__regen()">🎨 Generar</button></div>';
             }
             if (idea.kanban) loadKanban(idea.kanban);
             renderTL(idea.timeline || []);
+            renderAiSummary(idea);
           } else {
             $("results")?.classList.add("hidden");
             $("input-zone")?.classList.remove("hidden");
@@ -497,7 +622,11 @@ export default function PapaletaApp() {
             : "";
           try {
             const raw = await aiCall(
-              `Experto en product design. Analiza y responde SOLO JSON:\n{"title":"Título","tag":"App|Negocio|Proyecto|Otro","doc":"<h3>🎯 Qué es</h3><p>...</p><h3>💡 Solución</h3><p>...</p><h3>🛠️ Materiales</h3><ul><li>...</li></ul><h3>📋 Pasos</h3><ol><li>...</li></ol><h3>💰 Monetización</h3><p>...</p><h3>⚠️ Riesgos</h3><ul><li>...</li></ul>","imgPrompt":"English prompt for photorealistic product mockup","roadmap":["Tarea1","Tarea2","Tarea3","Tarea4","Tarea5"]}\nIDEA: ${text}${ctx}`,
+              `Eres un experto en diseño de producto y negocios. Vas a analizar la idea del usuario y responder ESTRICTAMENTE con un solo objeto JSON válido.
+REGLAS PARA EL CAMPO "doc": DEBE estar formateado en HTML (usa etiquetas <br>, <h3>, <p>, <ul>, <li>, <strong>). PROHIBIDO usar Markdown (* o ** o #). Haz que el documento sea extenso, detallado, motivador y coherente.
+Formato esperado:
+{"title":"Título llamativo","tag":"App|Negocio|Proyecto|Otro","doc":"<h3>🎯 Qué es</h3><p>...</p><h3>💡 Solución</h3><p>...</p><h3>🛠️ Materiales</h3><ul><li>...</li></ul><h3>📋 Pasos</h3><ol><li>...</li></ol><h3>💰 Monetización</h3><p>...</p><h3>⚠️ Riesgos</h3><ul><li>...</li></ul>","imgPrompt":"English prompt for photorealistic product mockup","roadmap":["Tarea 1","Tarea 2","Tarea 3","Tarea 4","Tarea 5"]}
+IDEA DEL USUARIO: ${text}${ctx}`,
               img
             );
             const d = JSON.parse(raw.replace(/```json|```/g, "").trim().match(/\{[\s\S]*\}/)![0]);
@@ -505,26 +634,28 @@ export default function PapaletaApp() {
             if ($("idea-tag")) $("idea-tag")!.textContent = d.tag || "Idea";
             if ($("master-doc")) $("master-doc")!.innerHTML = d.doc || "";
             ["k-todo", "k-doing", "k-done"].forEach((id) => { const el = $(id); if (el) el.innerHTML = ""; });
-            (d.roadmap || []).forEach((t: string) => makeCard(t, "k-todo"));
+            let tasks = normalizeRoadmap(d.roadmap); if (!tasks.length) tasks = ["Definir objetivo","Investigar mercado","Crear prototipo","Probar con usuarios","Iterar"]; tasks.forEach((t: string) => makeCard(t, "k-todo"));
             lastImgPrompt = d.imgPrompt || d.title;
             genImg(lastImgPrompt);
             d.rawText = text;
-            await saveNew(d);
+            await saveNew({ ...d, kanban: getKanbanState() });
             logAct();
             toast("✅ ¡Idea analizada!");
+            refreshIdeaSummary({ silent: true });
           } catch (e: any) {
             const d = buildFreeIdea(text, ans);
             if ($("idea-title")) $("idea-title")!.textContent = d.title;
             if ($("idea-tag")) $("idea-tag")!.textContent = d.tag;
             if ($("master-doc")) $("master-doc")!.innerHTML = d.doc;
             ["k-todo", "k-doing", "k-done"].forEach((id) => { const el = $(id); if (el) el.innerHTML = ""; });
-            d.roadmap.forEach((t: string) => makeCard(t, "k-todo"));
+            normalizeRoadmap(d.roadmap).forEach((t: string) => makeCard(t, "k-todo"));
             lastImgPrompt = d.imgPrompt;
             genImg(lastImgPrompt);
             d.rawText = text;
-            await saveNew(d);
+            await saveNew({ ...d, kanban: getKanbanState() });
             logAct();
             toast("✅ Idea creada en modo gratis local");
+            refreshIdeaSummary({ silent: true });
           }
         }
 
@@ -608,15 +739,14 @@ export default function PapaletaApp() {
         }
 
         function pollinationsPublicUrl(prompt: string, width: number, height: number) {
-          const seed = Math.abs(String(prompt).split("").reduce((a, c) => ((a * 31) + c.charCodeAt(0)) | 0, 7));
-          const enc = encodeURIComponent(prompt.slice(0, 420));
-          return `https://gen.pollinations.ai/image/${enc}?model=flux&width=${width}&height=${height}&nologo=true&private=true&enhance=true&safe=true&seed=${seed}`;
+          const seed = Math.floor(Math.random() * 9999999);
+          const enc = encodeURIComponent(prompt.slice(0, 300));
+          return `https://image.pollinations.ai/prompt/${enc}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
         }
 
         function pollinationsLegacyUrl(prompt: string, width: number, height: number) {
-          const seed = Math.abs(String(prompt).split("").reduce((a, c) => ((a * 31) + c.charCodeAt(0)) | 0, 11));
-          const enc = encodeURIComponent(prompt.slice(0, 420));
-          return `https://image.pollinations.ai/prompt/${enc}?model=flux&width=${width}&height=${height}&nologo=true&private=true&enhance=true&seed=${seed}`;
+          const enc = encodeURIComponent(prompt.slice(0, 300));
+          return `https://image.pollinations.ai/prompt/${enc}?width=${width}&height=${height}&nologo=true&model=turbo`;
         }
 
         function loadImageUrlWithTimeout(url: string, ms: number) {
@@ -634,31 +764,20 @@ export default function PapaletaApp() {
           const msg = err?.message || String(err || "");
           if (/401|invalid|unauthorized/i.test(msg)) return "La key de Pollinations no es válida.";
           if (/402|balance|payment/i.test(msg)) return "La key no tiene saldo disponible.";
-          if (/429|rate/i.test(msg)) return "Límite de generación alcanzado. Espera o usa una key.";
-          if (/timeout/i.test(msg)) return "El respaldo gratuito tardó demasiado. Pega tu key de Pollinations.";
-          return msg || "No se pudo generar la imagen.";
+          if (/timeout/i.test(msg)) return "El generador tardó demasiado. Puedes reintentar.";
+          return "No se pudo generar la imagen.";
         }
 
         async function loadGeneratedImage(prompt: string, onload: (src: string) => void, onerror: (err: string) => void, width = 1024, height = 576) {
           const key = getImageApiKey();
           try {
-            if (key) {
-              const r = await fetch("https://gen.pollinations.ai/v1/images/generations", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
-                body: JSON.stringify({ model: "flux", prompt, n: 1, size: `${width}x${height}`, quality: "medium", response_format: "b64_json", safe: "true" }),
-              });
-              if (!r.ok) throw new Error("HTTP " + r.status);
-              const data = await r.json();
-              const item = data?.data?.[0] || {};
-              if (item.b64_json) { onload(`data:image/png;base64,${item.b64_json}`); return; }
-              if (item.url) { const src = await loadImageUrlWithTimeout(item.url, 65000); onload(src); return; }
-            }
-            const src = await loadImageUrlWithTimeout(pollinationsPublicUrl(prompt, width, height), 65000);
+            // Intentar con URL pública flux primero (120s timeout)
+            const src = await loadImageUrlWithTimeout(pollinationsPublicUrl(prompt, width, height), 120000);
             onload(src);
           } catch (e) {
             try {
-              const src = await loadImageUrlWithTimeout(pollinationsLegacyUrl(prompt, width, height), 65000);
+              // Fallback a modelo turbo (60s timeout)
+              const src = await loadImageUrlWithTimeout(pollinationsLegacyUrl(prompt, width, height), 60000);
               onload(src);
             } catch (e2) {
               onerror(friendlyImageError(e2 || e));
@@ -675,15 +794,15 @@ export default function PapaletaApp() {
           if (ideaId) sF("imgUrl", src);
         }
 
-        function showMinimalPlaceholder(w: HTMLElement, prompt = "", error = "") {
-          w.innerHTML = `<div style="width:100%;height:320px;background:linear-gradient(135deg,#F9FAFB,#E5E7EB);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;text-align:center"><div style="font-size:64px;opacity:0.3">🎨</div><div style="font-size:14px;color:var(--text2);font-weight:600">Imagen no disponible</div><div style="font-size:12px;color:var(--text2);max-width:520px;line-height:1.6">${escapeHTML(error || "El generador tardó demasiado. Puedes reintentar.")}</div><button onclick="window.__regen()" style="padding:8px 18px;background:var(--primary);color:white;border:none;border-radius:20px;font-size:13px;cursor:pointer;font-weight:600;">🔄 Reintentar</button></div>`;
+        function showMinimalPlaceholder(w: HTMLElement, _prompt = "", error = "") {
+          w.innerHTML = `<div class="hero-fallback"><div class="hero-fallback-icon">✦</div><p class="hero-fallback-title">Visual en preparación</p><p class="hero-fallback-msg">${escapeHTML(error || "El generador tardó. Puedes reintentar.")}</p><button type="button" class="hero-fallback-btn" onclick="window.__regen()">🔄 Reintentar</button></div>`;
         }
 
         function genImg(prompt: string) {
           const w = $("hero-wrap");
           if (!w) return;
           const visualPrompt = buildVisualPrompt(prompt);
-          w.innerHTML = '<div class="hero-loading"><span class="spin"></span> Generando imagen con IA…</div>';
+          w.innerHTML = '<div class="hero-loading"><span class="spin"></span> Generando imagen…<br><small style="font-size:11px;opacity:0.7;margin-top:8px;display:block;">Puede tardar 20-45 segundos</small></div>';
           loadGeneratedImage(visualPrompt, (src) => showHeroImg(w, src), (err) => showMinimalPlaceholder(w, visualPrompt, err), 1024, 576);
         }
         window.__regen = () => lastImgPrompt && genImg(lastImgPrompt);
@@ -823,6 +942,7 @@ export default function PapaletaApp() {
               renderTL(tl);
               ideas = JSON.parse(localStorage.getItem("pp_ideas") || "[]");
               toast("📸 ¡Foto agregada con descripción de IA!");
+              refreshIdeaSummary({ silent: true });
             };
             r.readAsDataURL(f);
           });
@@ -850,37 +970,118 @@ export default function PapaletaApp() {
           const hm = $("heatmap");
           if (!hm) return;
           const h = JSON.parse(localStorage.getItem("pp_hm") || "{}");
-          const WEEKS = 12;
+          
           const now = new Date();
-          const startDate = new Date(now);
-          startDate.setDate(startDate.getDate() - (WEEKS * 7 - 1));
-          let cells = "";
-          for (let w = 0; w < WEEKS; w++) {
-            for (let d = 0; d < 7; d++) {
-              const date = new Date(startDate);
-              date.setDate(startDate.getDate() + w * 7 + d);
-              const k = date.toISOString().slice(0, 10);
-              const c = h[k] || 0;
-              const l = c === 0 ? "" : c <= 2 ? "l1" : c <= 4 ? "l2" : c <= 7 ? "l3" : "l4";
-              const dateStr = date.toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" });
-              cells += `<div class="hm-cell ${l}" title="${dateStr}: ${c} ${c === 1 ? "acción" : "acciones"}"></div>`;
+          const currentYear = now.getFullYear();
+          const currentMonth = now.getMonth();
+          const monthName = now.toLocaleString("es", { month: "long" });
+          
+          const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+          const firstDayOfWeek = firstDayOfMonth.getDay(); 
+          const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+          
+          const dayNames = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
+          
+          let html = `<div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="font-size:14px; font-weight:600; text-transform:capitalize;">${monthName}, ${currentYear}</div>
+            <div style="font-size:11px; color:var(--text3); display:flex; align-items:center; gap:6px;">
+               <div style="width:8px;height:8px;border-radius:4px;background:var(--primary);"></div> Días activos
+            </div>
+          </div>`;
+          
+          html += `<div style="display:grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; max-width: 400px; margin: 0 auto;">`;
+          
+          // Header
+          dayNames.forEach(day => {
+            html += `<div style="font-size: 10px; font-weight: 600; color: var(--text3); margin-bottom: 4px;">${day}</div>`;
+          });
+          
+          // Empty days at start
+          for(let i = 0; i < firstDayOfWeek; i++) {
+            html += `<div></div>`;
+          }
+          
+          // Days
+          for(let d = 1; d <= daysInMonth; d++) {
+            const date = new Date(currentYear, currentMonth, d);
+            const k = date.toISOString().slice(0, 10);
+            const c = h[k] || 0;
+            const isToday = date.toDateString() === now.toDateString();
+            
+            let bg = "transparent";
+            let color = "var(--text2)";
+            let border = "1px solid var(--border)";
+            let shadow = "none";
+            
+            if (c > 0) {
+              const intensity = Math.min(1, 0.4 + (c * 0.15));
+              bg = `color-mix(in srgb, var(--primary) ${Math.round(intensity*100)}%, transparent)`;
+              color = "white";
+              border = "none";
+              if (c > 3) shadow = "0 2px 8px rgba(99, 102, 241, 0.3)";
             }
+            
+            if (isToday) border = "2px solid var(--primary)";
+            
+            const clickHandler = `
+              const dStr = '${date.toLocaleDateString("es", {day:"numeric", month:"long", year:"numeric"})}';
+              const idz = JSON.parse(localStorage.getItem('pp_ideas') || '[]');
+              const acts = idz.filter(i => new Date(i.updatedAt).toDateString() === '${date.toDateString()}');
+              
+              const container = document.getElementById('day-activity-content');
+              if (!container) return;
+              
+              if (acts.length > 0) {
+                let html = '<div style="width:100%; text-align:left; overflow-y:auto; max-height:200px; padding-right:8px;">';
+                html += '<h4 style="font-size:13px; color:var(--text3); margin-bottom:12px; font-weight:600; text-transform:uppercase;">' + dStr + '</h4>';
+                html += '<div style="display:flex; flex-direction:column; gap:8px;">';
+                acts.forEach(a => {
+                  html += '<div style="display:flex; align-items:center; gap:12px; padding:12px; background:var(--bg2); border-radius:8px; border:1px solid var(--border); cursor:pointer;" onclick="window.__loadIdea(\\'' + a.id + '\\')">';
+                  if (a.heroImg) {
+                    html += '<img src="' + a.heroImg + '" style="width:40px; height:40px; border-radius:6px; object-fit:cover;" />';
+                  } else {
+                    html += '<div style="width:40px; height:40px; border-radius:6px; background:var(--primary-l); color:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px;">' + (a.title ? a.title.charAt(0).toUpperCase() : 'I') + '</div>';
+                  }
+                  html += '<div style="flex:1; min-width:0; text-align:left;">';
+                  html += '<div style="font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + (a.title || 'Idea') + '</div>';
+                  html += '<div style="font-size:12px; color:var(--text3); margin-top:2px;">' + (a.tag || 'Idea') + ' • ' + (a.progress || 0) + '% completado</div>';
+                  html += '</div></div>';
+                });
+                html += '</div></div>';
+                container.innerHTML = html;
+              } else if (${c} > 0) {
+                container.innerHTML = '<div style="font-size:32px; margin-bottom:16px; opacity:0.8;">👻</div><p style="font-size:15px; font-weight:500; color:var(--text);">Registraste ' + ${c} + ' acciones el ' + dStr + ', pero no hubo modificaciones en ideas.</p>';
+              } else {
+                container.innerHTML = '<div style="font-size:32px; margin-bottom:16px; opacity:0.5; filter:grayscale(1);">💤</div><p style="font-size:15px; font-weight:500; color:var(--text3);">No hay actividad registrada para el ' + dStr + '.</p>';
+              }
+            `.replace(/\n/g, "").replace(/\s+/g, " ");
+
+            html += `<div style="
+              aspect-ratio: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 8px;
+              font-size: 12px;
+              font-weight: 500;
+              background: ${bg};
+              color: ${color};
+              border: ${border};
+              box-shadow: ${shadow};
+              cursor: pointer;
+              transition: transform 0.2s;
+            " title="${c} acciones" onclick="${clickHandler}" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+              ${d}
+            </div>`;
           }
-          hm.innerHTML = cells;
-          const ml = $("dhc-months");
-          if (!ml) return;
-          const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-          let labelsHTML = "";
-          let lastMonth = -1;
-          for (let w = 0; w < WEEKS; w++) {
-            const d = new Date(startDate);
-            d.setDate(startDate.getDate() + w * 7);
-            const m = d.getMonth();
-            labelsHTML += `<div class="dhc-month-label">${m !== lastMonth ? monthNames[m] : ""}</div>`;
-            lastMonth = m;
-          }
-          ml.innerHTML = labelsHTML;
+          
+          html += `</div>`;
+          hm.innerHTML = html;
+          
+          const ml = document.querySelectorAll(".dhc-months, .dhc-days, .dhc-range, .dhc-legend");
+          ml.forEach(el => (el as HTMLElement).style.display = "none");
         }
+
 
         // DARK MODE
         function toggleDarkMode() {
@@ -890,13 +1091,16 @@ export default function PapaletaApp() {
           const newTheme = isDark ? "light" : "dark";
           root.setAttribute("data-theme", newTheme);
           localStorage.setItem("pp_theme", newTheme);
+          setIsDarkTheme(newTheme === "dark");
           toast(isDark ? "Modo claro activado" : "Modo oscuro activado");
         }
+        (window as any).__toggleDarkMode = toggleDarkMode;
 
         function loadDarkMode() {
           const savedTheme = localStorage.getItem("pp_theme") || "light";
           const root = $("papaleta-root");
           if (root) root.setAttribute("data-theme", savedTheme);
+          setIsDarkTheme(savedTheme === "dark");
         }
 
         // VOICE
@@ -1009,8 +1213,9 @@ export default function PapaletaApp() {
         };
 
         const resetChat = () => {
+          chatHistory = [];
           const msgs = $("chat-msgs");
-          if (msgs) msgs.innerHTML = '<div class="bubble ai">Puedo editar el documento, agregar tareas, cambiar progreso o responder preguntas. 🚀</div>';
+          if (msgs) msgs.innerHTML = '<div class="bubble ai">Puedo editar el documento, agregar tareas, buscar en internet, generar imágenes o responder preguntas. 🚀</div>';
         };
 
         async function sendChat() {
@@ -1019,17 +1224,59 @@ export default function PapaletaApp() {
           if (!msg) return;
           input.value = "";
           addBubble("user", msg);
-          const docTxt = $("master-doc")?.innerText?.slice(0, 500) || "";
+          chatHistory.push({ role: "user", content: msg });
+          const docTxt = $("master-doc")?.innerText?.slice(0, 800) || "";
           const idea = ideas.find((i) => i.id === ideaId);
           const kb = `Todo:${[...($("k-todo")?.querySelectorAll(".k-card") || [])].map((c) => c.textContent).join(",")}|Doing:${[...($("k-doing")?.querySelectorAll(".k-card") || [])].map((c) => c.textContent).join(",")}|Done:${[...($("k-done")?.querySelectorAll(".k-card") || [])].map((c) => c.textContent).join(",")}`;
+          const hist = chatHistory.slice(-8).map((m) => `${m.role}: ${m.content}`).join("\n");
+          const wantsSearch = /\b(busca|investiga|internet|actualidad|noticias|mercado|competencia)\b/i.test(msg);
+          let webCtx = "";
+          if (wantsSearch) {
+            addBubble("ai", "🔍 Buscando información en internet…");
+            webCtx = await webSearch(`${idea?.title || ""} ${msg}`.slice(0, 120));
+          }
+          const wantsImage = /\b(imagen|visualiza|dibuja|genera.*img|mockup|ilustraci)\b/i.test(msg);
+          const wantsAvance =
+            /\b(resumen|avance|bit[aá]cora|analiza|estado del proyecto|pr[oó]ximos pasos)\b/i.test(msg);
+          if (wantsAvance && idea?.doc) {
+            try {
+              const source = buildSummarySource(idea) + `\n\nPregunta del usuario: ${msg}`;
+              const raw = await aiCall(`${PAPALETA_AVANCE_PROMPT}\n\n---\n${source}`);
+              addBubble("ai", raw.replace(/\n/g, "<br>"));
+              chatHistory.push({ role: "assistant", content: raw.slice(0, 500) });
+              const mini = parseMiniResumen(raw);
+              if (mini.length > 20) {
+                await sF("aiSummary", mini);
+                await sF("aiSummaryFull", raw);
+                ideas = JSON.parse(localStorage.getItem("pp_ideas") || "[]");
+                renderAiSummary(ideas.find((i) => i.id === ideaId));
+              }
+              return;
+            } catch (e: any) {
+              addBubble("ai", "❌ " + e.message);
+              return;
+            }
+          }
           try {
             const raw = await aiCall(
-              `Asistente Papaleta. Idea:"${idea?.title}". Progreso:${idea?.progress || 0}%.\nDoc:"${docTxt}"\nKanban:${kb}\nUsuario:"${msg}"\nResponde SOLO JSON con UNA acción:\n{"action":"rewrite","doc":"<h3>...</h3><p>HTML nuevo</p>","response":"qué cambié"}\n{"action":"add_task","task":"texto","column":"todo|doing|done","response":"qué agregué"}\n{"action":"add_multiple_tasks","tasks":["tarea1","tarea2"],"response":"qué agregué"}\n{"action":"move_task","task":"nombre","to":"todo|doing|done","response":"qué moví"}\n{"action":"complete_task","task":"nombre","response":"qué completé"}\n{"action":"set_progress","value":50,"response":"razón"}\n{"action":"chat","response":"respuesta"}\nEspañol. Solo JSON.`
+              `Asistente Papaleta. Idea:"${idea?.title}". Progreso:${idea?.progress || 0}%.\nDoc:"${docTxt}"\nKanban:${kb}\n${webCtx ? "Web:\\n" + webCtx + "\\n" : ""}Historial:\\n${hist}\nUsuario:"${msg}"\nResponde SOLO JSON con UNA acción. IMPORTANTE: Cuando uses "rewrite", el campo "doc" DEBE ser HTML puro (<h3>, <p>, <ul>), nunca uses Markdown.\n{"action":"rewrite","doc":"<h3>...</h3><p>HTML</p>","response":"qué cambié"}\n{"action":"add_task","task":"texto","column":"todo|doing|done","response":"qué agregué"}\n{"action":"add_multiple_tasks","tasks":["t1","t2"],"response":"qué agregué"}\n{"action":"move_task","task":"nombre","to":"todo|doing|done","response":"qué moví"}\n{"action":"complete_task","task":"nombre","response":"qué completé"}\n{"action":"set_progress","value":50,"response":"razón"}\n{"action":"generate_image","prompt":"English visual prompt","response":"generando imagen"}\n{"action":"web_search","query":"términos","response":"buscaré"}\n{"action":"chat","response":"respuesta"}\nEspañol. Estrictamente JSON.`
             );
             let p: any;
             try { p = JSON.parse(raw.replace(/```json|```/g, "").trim().match(/\{[\s\S]*\}/)![0]); }
             catch { p = { action: "chat", response: raw }; }
             addBubble("ai", p.response || "✅");
+            chatHistory.push({ role: "assistant", content: p.response || "" });
+            if (p.action === "web_search" && p.query) {
+              const extra = await webSearch(p.query);
+              if (extra) addBubble("ai", "📎 Resultados:\n" + extra.slice(0, 1200));
+            }
+            if ((p.action === "generate_image" && p.prompt) || (wantsImage && !p.action)) {
+              const prompt = p.prompt || buildVisualPrompt(msg);
+              lastImgPrompt = prompt;
+              sF("imgPrompt", prompt);
+              genImg(prompt);
+              toast("🎨 Generando imagen…");
+            }
             if (p.action === "rewrite" && p.doc) { const md = $("master-doc"); if (md) { md.innerHTML = p.doc; sF("doc", p.doc); toast("📝 Documento actualizado"); } }
             if (p.action === "add_task" && p.task) { const col = p.column || "todo"; makeCard(p.task, `k-${col}`); saveKanban(); calcPct(); toast(`✅ Tarea agregada`); }
             if (p.action === "add_multiple_tasks" && p.tasks && Array.isArray(p.tasks)) { p.tasks.forEach((t: string) => makeCard(t, "k-todo")); saveKanban(); calcPct(); toast(`✅ ${p.tasks.length} tareas agregadas`); }
@@ -1061,15 +1308,19 @@ export default function PapaletaApp() {
         }
 
         async function startLocalSession() {
+          console.log("🔧 Iniciando sesión local...");
           user = { uid: "local", displayName: "Creador Local", photoURL: "" };
+          console.log("👤 Usuario creado:", user);
           $("login")?.classList.add("hidden");
           $("app")?.classList.remove("hidden");
+          console.log("🎨 UI actualizada");
           updateUserProfile(user);
           await loadIdeas();
           renderNav();
           showDashboard();
           wire();
           toast("Modo local gratis activado");
+          console.log("✅ Sesión local iniciada correctamente");
         }
 
         function wire() {
@@ -1146,10 +1397,31 @@ export default function PapaletaApp() {
             };
           });
           setupKanban();
+
+          const btnEditSummary = $("btn-edit-summary");
+          const btnSaveSummary = $("btn-save-summary");
+          const btnRegenSummary = $("btn-regen-summary");
+          const summaryView = $("ai-summary-view");
+          const summaryEdit = $("ai-summary-edit") as HTMLTextAreaElement;
+          if (btnEditSummary) btnEditSummary.onclick = () => {
+            summaryView?.classList.add("hidden");
+            summaryEdit?.classList.remove("hidden");
+            btnSaveSummary?.classList.remove("hidden");
+            if (summaryEdit) summaryEdit.value = summaryView?.textContent || "";
+          };
+          if (btnSaveSummary) btnSaveSummary.onclick = async () => {
+            const v = summaryEdit?.value.trim() || "";
+            await sF("aiSummary", v);
+            ideas = JSON.parse(localStorage.getItem("pp_ideas") || "[]");
+            renderAiSummary(ideas.find((i) => i.id === ideaId));
+            toast("✅ Resumen guardado");
+          };
+          if (btnRegenSummary) btnRegenSummary.onclick = () => refreshIdeaSummary();
         }
 
         // AUTH
         onAuthStateChanged(auth, async (u) => {
+          $("login")?.classList.remove("auth-checking");
           if (u) {
             localMode = false;
             localStorage.removeItem("pp_local_mode");
@@ -1162,34 +1434,70 @@ export default function PapaletaApp() {
             renderNav();
             showDashboard();
             wire();
-            const gki = $("groq-key-input") as HTMLInputElement;
-            if (gki) gki.value = localStorage.getItem("pp_groq_key") || "";
           } else {
-            if (localMode) { await startLocalSession(); return; }
+            if (localMode || localStorage.getItem("pp_local_mode") === "1") {
+              localMode = true;
+              await startLocalSession();
+              return;
+            }
             $("login")?.classList.remove("hidden");
             $("app")?.classList.add("hidden");
           }
         });
 
-        const btnLogin = $("btn-login");
-        if (btnLogin) btnLogin.onclick = () => signInWithPopup(auth, provider).catch((e) => toast("Error: " + e.message));
-        const btnLocal = $("btn-local");
-        if (btnLocal) btnLocal.onclick = async () => { localMode = true; localStorage.setItem("pp_local_mode", "1"); await startLocalSession(); };
-
-        // Groq key setup UI
-        const groqKeyInput = $("groq-key-input") as HTMLInputElement;
-        const btnSaveGroq = $("btn-save-groq");
-        if (groqKeyInput) groqKeyInput.value = localStorage.getItem("pp_groq_key") || "";
-        if (btnSaveGroq) btnSaveGroq.onclick = () => {
-          const key = groqKeyInput?.value.trim();
-          if (key) {
-            localStorage.setItem("pp_groq_key", key);
-            if (user?.uid && user.uid !== "local") saveUserSettings(user.uid, { groqKey: key });
+        // Setup login buttons - wait for DOM to be ready
+        const setupLoginButtons = () => {
+          const btnLogin = $("btn-login");
+          const btnLocal = $("btn-local");
+          
+          console.log("🔍 Buscando botones...");
+          console.log("btnLogin:", btnLogin);
+          console.log("btnLocal:", btnLocal);
+          
+          if (btnLogin) {
+            console.log("✅ Botón Google encontrado");
+            btnLogin.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log("🚀 Click en botón Google");
+              signInWithPopup(auth, provider).catch((e) => toast("Error: " + e.message));
+            };
           } else {
-            localStorage.removeItem("pp_groq_key");
-            if (user?.uid && user.uid !== "local") saveUserSettings(user.uid, { groqKey: "" });
+            console.log("❌ Botón Google NO encontrado");
           }
-          toast("✅ Key guardada — no la necesitarás pegar de nuevo");
+          
+          if (btnLocal) {
+            console.log("✅ Botón Local encontrado");
+            btnLocal.onclick = async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log("🚀 Click en botón local");
+              localMode = true;
+              localStorage.setItem("pp_local_mode", "1");
+              await startLocalSession();
+            };
+          } else {
+            console.log("❌ Botón Local NO encontrado");
+          }
+        };
+
+        // Try multiple times to setup buttons
+        setTimeout(setupLoginButtons, 0);
+        setTimeout(setupLoginButtons, 100);
+        setTimeout(setupLoginButtons, 500);
+        setTimeout(setupLoginButtons, 1000);
+
+        // Expose functions globally for direct button access
+        (window as any).__startLocalSession = async () => {
+          console.log("🌍 Global startLocalSession llamado");
+          localMode = true;
+          localStorage.setItem("pp_local_mode", "1");
+          await startLocalSession();
+        };
+
+        (window as any).__startGoogleLogin = () => {
+          console.log("🌍 Global startGoogleLogin llamado");
+          signInWithPopup(auth, provider).catch((e) => toast("Error: " + e.message));
         };
 
         // Image regen modal
@@ -1246,39 +1554,73 @@ export default function PapaletaApp() {
       </svg>
 
       {/* LOGIN */}
-      <div id="login" className="login-screen">
-        <DottedSurface />
-        <div className="login-card" style={{
-          background: "rgba(255, 255, 255, 0.1)",
-          backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-        }}>
-          <img src="/papaletaarriba.png" alt="Papaleta" className="lc-logo-img" />
-          <h1 className="lc-title">Papaleta</h1>
-          <p className="lc-sub">Tu laboratorio de ideas con IA</p>
-          <div className="lc-features">
-            <div className="lcf">🔍 Analiza con preguntas inteligentes</div>
-            <div className="lcf">✨ Potencia y estructura con IA</div>
-            <div className="lcf">🗂️ Kanban interactivo</div>
-            <div className="lcf">📸 Bitácora visual de avances</div>
+      <div id="login" className="login-screen auth-checking">
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+          <DottedSurface />
+        </div>
+        <div className="login-layout">
+          <div className="login-panel login-panel-brand">
+            <img src="/papaletaarriba.png" alt="Papaleta" className="lc-logo-img" />
+            <h1 className="lc-title">Papaleta</h1>
+            <p className="lc-sub">Tu laboratorio de ideas con IA</p>
+            <div className="lc-features">
+              <div className="lcf">🔍 Analiza con preguntas inteligentes</div>
+              <div className="lcf">✨ Potencia y estructura con IA</div>
+              <div className="lcf">🗂️ Kanban interactivo</div>
+              <div className="lcf">📸 Bitácora visual de avances</div>
+            </div>
           </div>
-          {/* Groq key setup */}
-          <div style={{ marginBottom: 14, display: "flex", gap: 8 }}>
-            <input id="groq-key-input" type="password" placeholder="Groq API key (gsk_...)" style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--surface)", color: "var(--text)", fontFamily: "Inter", fontSize: 13 }} />
-            <button id="btn-save-groq" style={{ padding: "10px 14px", background: "var(--primary)", color: "#fff", borderRadius: 10, fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer" }}>Guardar</button>
+          <div className="login-card glass login-panel-auth">
+            <h2 className="lc-auth-title">Comienza ahora</h2>
+            <p className="lc-session-hint">Empieza a crear ideas en segundos</p>
+            <button 
+              id="btn-local" 
+              className="btn-local" 
+              style={{ fontSize: '16px', padding: '16px' }}
+              onClick={(e) => {
+                e.preventDefault();
+                console.log("⚡ React onClick - botón local");
+                if ((window as any).__startLocalSession) {
+                  (window as any).__startLocalSession();
+                } else {
+                  console.error("❌ __startLocalSession no está disponible");
+                }
+              }}
+            >
+              🚀 Entrar gratis sin cuenta
+            </button>
+            <p className="lc-note" style={{ marginTop: '12px', marginBottom: '16px' }}>Gratis · Sin registro · Datos privados</p>
+            <div style={{ margin: "16px 0", textAlign: "center", color: "rgba(245,245,247,0.3)", fontSize: "11px", display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(245,245,247,0.1)' }}></div>
+              <span>o si prefieres</span>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(245,245,247,0.1)' }}></div>
+            </div>
+            <button 
+              id="btn-login" 
+              className="btn-google" 
+              style={{ opacity: 0.7 }}
+              onClick={(e) => {
+                e.preventDefault();
+                console.log("⚡ React onClick - botón Google");
+                if ((window as any).__startGoogleLogin) {
+                  (window as any).__startGoogleLogin();
+                } else {
+                  console.error("❌ __startGoogleLogin no está disponible");
+                }
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.07 5.07 0 01-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09a6.97 6.97 0 010-4.18V7.07H2.18A11 11 0 001 12c0 1.78.43 3.45 1.18 4.93l3.66-2.84z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+              </svg>
+              Continuar con Google
+            </button>
+            <p className="lc-note" style={{ fontSize: '10px', opacity: 0.5, marginTop: '8px' }}>
+              (El login con Google puede tener problemas de CORS en desarrollo)
+            </p>
           </div>
-          <p style={{ fontSize: 11, color: "var(--text3)", marginBottom: 14, lineHeight: 1.5 }}>Obtén tu key gratis en <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" style={{ color: "var(--primary)" }}>console.groq.com/keys</a></p>
-          <button id="btn-login" className="btn-google">
-            <svg width="18" height="18" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.07 5.07 0 01-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09a6.97 6.97 0 010-4.18V7.07H2.18A11 11 0 001 12c0 1.78.43 3.45 1.18 4.93l3.66-2.84z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-            </svg>
-            Continuar con Google
-          </button>
-          <button id="btn-local" className="btn-local">Entrar gratis sin cuenta</button>
-          <p className="lc-note">Gratis · Sin tarjeta · Datos privados</p>
         </div>
       </div>
 
@@ -1325,7 +1667,7 @@ export default function PapaletaApp() {
             </button>
             <img id="uavatar" className="u-avatar" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" />
             <span id="uname" className="u-name">—</span>
-            <button id="btn-logout" className="icon-btn" title="Salir">⇥</button>
+            <button id="btn-logout" className="chip-btn" title="Cerrar sesión" style={{ padding: '6px 12px', fontSize: '12px', marginLeft: 'auto' }}>Salir</button>
           </div>
         </aside>
 
@@ -1348,22 +1690,24 @@ export default function PapaletaApp() {
               <div className="stat-card"><div className="stat-icon">✅</div><div className="stat-value" id="stat-completed">0</div><div className="stat-label">Completadas</div></div>
               <div className="stat-card"><div className="stat-icon">🔥</div><div className="stat-value" id="stat-streak">0</div><div className="stat-label">Días Seguidos</div></div>
             </div>
-            <div className="dash-heatmap-card">
-              <div className="dhc-header">
-                <div className="dhc-title"><span className="dhc-icon">📅</span><span>Tu Actividad</span></div>
-                <span id="dhc-total" className="dhc-total">0 acciones</span>
-              </div>
-              <div className="dhc-months" id="dhc-months"></div>
-              <div className="dhc-grid">
-                <div className="dhc-days">
-                  <span></span><span>Lun</span><span></span><span>Mié</span><span></span><span>Vie</span><span></span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+              <div className="dash-heatmap-card" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
+                <div className="dhc-header" style={{ marginBottom: '0' }}>
+                  <div className="dhc-title"><span className="dhc-icon">📅</span><span>Tu Actividad</span></div>
                 </div>
-                <div id="heatmap" className="dhc-heatmap"></div>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 0' }}>
+                  <div id="heatmap" className="dhc-heatmap-new" style={{ width: '100%' }}></div>
+                </div>
               </div>
-              <div className="dhc-legend">
-                <span>Menos</span>
-                <div className="hm-cell"></div><div className="hm-cell l1"></div><div className="hm-cell l2"></div><div className="hm-cell l3"></div><div className="hm-cell l4"></div>
-                <span>Más</span>
+              
+              <div className="dash-heatmap-card" style={{ margin: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <div className="dhc-header" style={{ marginBottom: '0', borderBottom: '1px solid var(--border)', paddingBottom: '16px' }}>
+                  <div className="dhc-title"><span className="dhc-icon">⚡</span><span>Detalle del Día</span></div>
+                </div>
+                <div id="day-activity-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 20px', color: 'var(--text3)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '42px', marginBottom: '16px', opacity: 0.5, filter: 'grayscale(1)' }}>👆</div>
+                  <p style={{ fontSize: '15px', lineHeight: 1.5, fontWeight: 500 }}>Selecciona un día en el calendario<br/>para ver en qué ideas trabajaste.</p>
+                </div>
               </div>
             </div>
             <div className="dash-ideas-section">
@@ -1385,8 +1729,9 @@ export default function PapaletaApp() {
           </div>
 
           {/* WORKSPACE */}
-          <div id="workspace" className="workspace hidden">
-            <div className="idea-header-card">
+          <div id="workspace" className="workspace hidden relative">
+            <BGPattern variant="grid" mask="fade-edges" />
+            <div className="idea-header-card relative z-10">
               <div className="ihc-left">
                 <div className="ihc-meta">
                   <span id="idea-tag" className="tag-pill">Idea</span>
@@ -1453,6 +1798,18 @@ export default function PapaletaApp() {
 
             {/* RESULTS */}
             <div id="results" className="results hidden">
+              <div id="ai-summary-section" className="ai-summary-section glass-panel hidden">
+                <div className="ai-summary-header">
+                  <span className="block-label">💡 Resumen de IA</span>
+                  <div className="ai-summary-actions">
+                    <button type="button" id="btn-regen-summary" className="chip-btn">↻ Regenerar</button>
+                    <button type="button" id="btn-edit-summary" className="chip-btn">✏️ Editar</button>
+                  </div>
+                </div>
+                <div id="ai-summary-view" className="ai-summary-view"></div>
+                <textarea id="ai-summary-edit" className="ai-summary-edit hidden" rows={4} placeholder="Edita el resumen generado por IA…" />
+                <button type="button" id="btn-save-summary" className="btn-primary ai-summary-save hidden">Guardar resumen</button>
+              </div>
               <div className="hero-section">
                 <div className="hero-header"><span className="block-label">🎨 Visualización del Concepto</span><button id="btn-regen-img" className="chip-btn">🔄 Regenerar</button></div>
                 <div id="hero-wrap" className="hero-wrap"><div className="hero-loading"><span className="spin"></span> Generando imagen…</div></div>

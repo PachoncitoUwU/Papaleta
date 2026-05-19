@@ -8,9 +8,9 @@
   --surface2: #f5f5f7;
   --sb: #1d1d1f;
   --sb2: #2d2d2f;
-  --primary: #6366f1;
-  --primary-l: rgba(99,102,241,0.10);
-  --primary-d: #4f46e5;
+  --primary: #ff6a3d;
+  --primary-l: rgba(255,106,61,0.12);
+  --primary-d: #ff4f1f;
   --green: #34c759;
   --amber: #ff9500;
   --red: #ff3b30;
@@ -61,6 +61,66 @@
   -moz-osx-font-smoothing: grayscale;
 }
 #papaleta-root .hidden { display: none !important; }
+
+/* ───── LIQUID GLASS ───── */
+#papaleta-root .glass,
+#papaleta-root .login-card,
+#papaleta-root .glass-panel {
+  position: relative;
+  isolation: isolate;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.08);
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+}
+
+#papaleta-root .glass::before,
+#papaleta-root .login-card::before,
+#papaleta-root .glass-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.04) 40%,
+    transparent 60%
+  );
+  opacity: 0.55;
+  z-index: 0;
+}
+
+#papaleta-root .glass > *,
+#papaleta-root .login-card > *,
+#papaleta-root .glass-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme="light"] #papaleta-root .glass-panel {
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="dark"] #papaleta-root .glass-panel {
+  background: rgba(28, 28, 30, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] #papaleta-root .main {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99, 102, 241, 0.12), transparent),
+    var(--bg);
+}
 #papaleta-root ::-webkit-scrollbar { width: 4px; }
 #papaleta-root ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 #papaleta-root button { cursor: pointer; font-family: var(--font); border: none; }
@@ -85,40 +145,238 @@
 
 /* ───── LOGIN ───── */
 #papaleta-root .login-screen {
-  position: fixed; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: #06060f;
-  z-index: 100; overflow: hidden;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px !important;
+  background: #000000 !important;
+  z-index: 100 !important;
+  overflow-y: auto !important;
 }
 
-#papaleta-root .login-canvas {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  pointer-events: none; z-index: 0; display: block;
+#papaleta-root .login-layout {
+  position: relative !important;
+  z-index: 1 !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 500px !important;
+  margin: 0 auto !important;
+}
+
+#papaleta-root .login-panel-brand {
+  width: 100% !important;
+  padding: 0 0 28px 0 !important;
+  color: #f5f5f7 !important;
+  text-align: center !important;
+}
+
+#papaleta-root .login-panel-brand .lc-logo-img {
+  width: 80px !important;
+  height: 80px !important;
+  display: block !important;
+  margin: 0 auto 20px auto !important;
+  border-radius: 20px !important;
+  object-fit: contain !important;
+}
+
+#papaleta-root .login-panel-brand .lc-title {
+  font-size: 42px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.5px !important;
+  text-align: center !important;
+  color: #f5f5f7 !important;
+  margin-bottom: 8px !important;
+  line-height: 1.1 !important;
+}
+
+#papaleta-root .login-panel-brand .lc-sub {
+  color: rgba(245, 245, 247, 0.7) !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  text-align: center !important;
+  margin-bottom: 24px !important;
+  line-height: 1.5 !important;
+}
+
+#papaleta-root .login-panel-brand .lc-features {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  margin-bottom: 8px !important;
+}
+
+#papaleta-root .login-panel-brand .lc-features .lcf {
+  font-size: 13px !important;
+  color: rgba(245, 245, 247, 0.85) !important;
+  padding: 12px 14px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-radius: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  text-align: center !important;
+}
+
+#papaleta-root .login-panel-auth {
+  width: 100% !important;
 }
 
 #papaleta-root .login-card {
-  position: relative; z-index: 1;
-  background: rgba(255, 255, 255, 0.055);
-  backdrop-filter: blur(32px) saturate(160%) brightness(1.1);
-  -webkit-backdrop-filter: blur(32px) saturate(160%) brightness(1.1);
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-top: 1px solid rgba(255, 255, 255, 0.28);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 44px 40px;
-  width: 400px; max-width: 94vw;
-  box-shadow:
-    0 32px 80px rgba(0,0,0,0.7),
-    0 8px 24px rgba(0,0,0,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.18),
-    inset 0 -1px 0 rgba(255,255,255,0.04);
-  animation: pp-pop .4s cubic-bezier(0.34,1.56,0.64,1);
+  width: 100% !important;
+  margin: 0 !important;
+  border-radius: 24px !important;
+  padding: 40px 36px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(40px) saturate(200%) brightness(1.15) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4) !important;
+  animation: pp-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
   --text: #f5f5f7;
-  --text2: rgba(245,245,247,0.72);
-  --text3: rgba(245,245,247,0.42);
-  --bg2: rgba(255,255,255,0.07);
-  --border: rgba(255,255,255,0.16);
-  --surface: rgba(255,255,255,0.08);
+  --text2: rgba(245, 245, 247, 0.72);
+  --text3: rgba(245, 245, 247, 0.42);
+  --bg2: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.16);
+  --surface: rgba(255, 255, 255, 0.08);
+}
+
+#papaleta-root .lc-auth-title {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  color: var(--text) !important;
+  margin-bottom: 10px !important;
+}
+
+@media (max-width: 600px) {
+  #papaleta-root .login-layout {
+    max-width: 400px !important;
+  }
+  
+  #papaleta-root .login-panel-brand .lc-features {
+    grid-template-columns: 1fr !important;
+  }
+  
+  #papaleta-root .login-panel-brand .lc-title {
+    font-size: 34px !important;
+  }
+  
+  #papaleta-root .login-card {
+    padding: 32px 28px !important;
+  }
+}
+
+#papaleta-root .login-screen.auth-checking .login-card {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+#papaleta-root .login-screen:not(.auth-checking) .login-card {
+  opacity: 1 !important;
+}
+
+#papaleta-root .login-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 40%, rgba(99, 102, 241, 0.12), transparent 55%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#papaleta-root .login-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  display: block;
+}
+
+#papaleta-root .lc-groq-row {
+  display: flex; gap: 8px; margin-bottom: 14px;
+}
+#papaleta-root .lc-groq-input {
+  flex: 1; padding: 10px 12px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: rgba(255,255,255,0.06);
+  color: var(--text); font-family: var(--font); font-size: 13px;
+}
+#papaleta-root .lc-groq-input:focus { outline: none; border-color: var(--primary); }
+#papaleta-root .lc-groq-save {
+  padding: 10px 14px; background: var(--primary); color: #fff;
+  border-radius: 10px; font-weight: 700; font-size: 13px; border: none;
+}
+#papaleta-root .lc-groq-hint {
+  font-size: 11px; color: var(--text3); margin-bottom: 14px; line-height: 1.5;
+}
+#papaleta-root .lc-groq-hint a { color: #a5b4fc; }
+
+#papaleta-root .lc-session-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text3);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+#papaleta-root .sb-session-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--green);
+  background: rgba(52, 199, 89, 0.15);
+  padding: 4px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+#papaleta-root .ic-status {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  margin-bottom: 6px;
+}
+#papaleta-root .ic-status-done {
+  background: rgba(52, 199, 89, 0.15);
+  color: var(--green);
+}
+#papaleta-root .ic-status-progress {
+  background: var(--primary-l);
+  color: var(--primary);
+}
+#papaleta-root .idea-card-done { opacity: 0.92; }
+
+#papaleta-root .dhc-range {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 4px;
+}
+#papaleta-root .hm-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+}
+#papaleta-root .hm-day {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--text3);
+  line-height: 1;
+  pointer-events: none;
+}
+#papaleta-root .hm-cell.l3 .hm-day,
+#papaleta-root .hm-cell.l4 .hm-day { color: rgba(255,255,255,0.9); }
+#papaleta-root .hm-cell.hm-today {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
 }
 
 /* ───── REGEN MODAL ───── */
@@ -130,12 +388,9 @@
   animation: pp-fadeUp .18s ease;
 }
 #papaleta-root .regen-modal-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--r-xl);
   padding: 32px 28px;
   width: 460px; max-width: 94vw;
-  box-shadow: var(--sh2);
   animation: pp-pop .22s ease;
 }
 #papaleta-root .regen-modal-title {
@@ -167,12 +422,6 @@
   transition: background var(--t);
 }
 #papaleta-root .regen-btn-confirm:hover { background: var(--primary-d); }
-#papaleta-root .lc-logo-img {
-  width: 64px; height: 64px;
-  display: block; margin: 0 auto 16px;
-  border-radius: 16px;
-  object-fit: contain;
-}
 #papaleta-root .lc-title {
   font-size: 24px; font-weight: 700; letter-spacing: -.5px;
   text-align: center; color: var(--text); margin-bottom: 4px;
@@ -185,9 +434,11 @@
   display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;
 }
 #papaleta-root .lcf {
-  font-size: 12px; color: var(--text2); padding: 10px 12px;
+  font-size: 13px; color: var(--text2); padding: 12px 14px;
   background: var(--bg2); border-radius: var(--r-sm);
-  font-weight: 500; line-height: 1.5;
+  font-weight: 500; line-height: 1.55;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 #papaleta-root .btn-google {
   width: 100%; display: flex; align-items: center; justify-content: center;
@@ -283,7 +534,10 @@
 }
 #papaleta-root .idea-nav-item:hover { background: rgba(255,255,255,.06); }
 #papaleta-root .idea-nav-item.active { background: rgba(255,255,255,.09); border-left: 2px solid var(--primary); }
-#papaleta-root .ini-title { font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 3px; text-overflow: ellipsis; overflow: hidden; }
+#papaleta-root .ini-title {
+  font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 3px;
+  text-overflow: ellipsis; overflow: hidden; white-space: nowrap; display: block;
+}
 #papaleta-root .ini-meta { display: flex; gap: 8px; }
 #papaleta-root .ini-tag { font-size: 10px; padding: 1px 7px; background: rgba(255,255,255,.09); color: rgba(255,255,255,.55); border-radius: 20px; font-weight: 600; }
 #papaleta-root .ini-pct { font-size: 10px; color: rgba(255,255,255,.4); font-weight: 600; }
@@ -345,9 +599,9 @@
 /* STAT CARDS */
 #papaleta-root .dash-stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 36px; }
 #papaleta-root .stat-card {
-  background: var(--surface); border-radius: var(--r-lg);
+  border-radius: var(--r-lg);
   padding: 24px 20px; text-align: center;
-  border: 1px solid var(--border); transition: var(--t);
+  transition: var(--t);
 }
 #papaleta-root .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--sh); }
 #papaleta-root .stat-icon { font-size: 26px; margin-bottom: 10px; }
@@ -356,19 +610,40 @@
 
 /* HEATMAP CARD */
 #papaleta-root .dash-heatmap-card {
-  background: var(--surface); border-radius: var(--r-lg);
-  padding: 28px; border: 1px solid var(--border); margin-bottom: 28px;
+  border-radius: var(--r-lg);
+  padding: 28px; margin-bottom: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+}
+
+[data-theme="dark"] #papaleta-root .dash-heatmap-card {
+  background: #121212;
+  border-color: rgba(255, 255, 255, 0.08);
 }
 #papaleta-root .dhc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 #papaleta-root .dhc-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: var(--text); }
 #papaleta-root .dhc-icon { font-size: 18px; }
 #papaleta-root .dhc-total { font-size: 12px; color: var(--text3); background: var(--bg2); padding: 5px 14px; border-radius: 20px; font-weight: 500; }
-#papaleta-root .dhc-months { display: flex; margin-left: 42px; margin-bottom: 6px; gap: 0; }
-#papaleta-root .dhc-month-label { font-size: 10px; color: var(--text3); font-weight: 500; flex: 1; min-width: 0; text-align: left; }
-#papaleta-root .dhc-grid { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 14px; }
+#papaleta-root .dhc-months {
+  display: grid;
+  grid-template-columns: repeat(12, 14px);
+  gap: 4px;
+  margin-bottom: 6px;
+  justify-content: center;
+}
+#papaleta-root .dhc-month-label {
+  font-size: 9px;
+  color: var(--text3);
+  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#papaleta-root .dhc-grid { display: flex; gap: 10px; align-items: flex-start; justify-content: center; margin-bottom: 14px; }
 #papaleta-root .dhc-days { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
 #papaleta-root .dhc-days span { height: 14px; font-size: 10px; color: var(--text3); line-height: 14px; white-space: nowrap; width: 32px; text-align: right; font-weight: 500; }
-#papaleta-root .dhc-heatmap { display: grid; grid-template-rows: repeat(7,14px); grid-auto-flow: column; gap: 4px; }
+#papaleta-root .dhc-heatmap { display: grid; grid-template-rows: repeat(7,14px); grid-auto-flow: column; gap: 4px; justify-content: center; }
 #papaleta-root .dhc-legend { display: flex; align-items: center; gap: 5px; justify-content: flex-end; font-size: 11px; color: var(--text3); font-weight: 500; padding-top: 10px; border-top: 1px solid var(--border2); }
 
 /* IDEAS GRID */
@@ -385,15 +660,23 @@
 #papaleta-root .ie-icon { font-size: 48px; margin-bottom: 14px; opacity: .5; }
 #papaleta-root .ie-text { color: var(--text3); font-size: 14px; line-height: 1.7; margin-bottom: 20px; }
 #papaleta-root .idea-card {
-  background: var(--surface); border-radius: var(--r-lg);
-  overflow: hidden; border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
   transition: var(--t); cursor: pointer; animation: pp-fadeUp .3s ease;
 }
 #papaleta-root .idea-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--sh2); }
 #papaleta-root .ic-image {
-  width: 100%; height: 150px; background: var(--bg2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 40px; color: var(--text3);
+  width: 100%;
+  height: 12rem;
+  min-height: 12rem;
+  max-height: 12rem;
+  overflow: hidden;
+  background: var(--bg2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  color: var(--text3);
 }
 #papaleta-root .ic-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
 #papaleta-root .ic-image-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
@@ -407,7 +690,6 @@
 /* ───── WORKSPACE ───── */
 #papaleta-root .workspace { padding: 40px; max-width: 860px; margin: 0 auto; animation: pp-fadeUp .3s ease; }
 #papaleta-root .idea-header-card {
-  background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--r-xl); padding: 28px 32px;
   margin-bottom: 28px; display: flex;
   justify-content: space-between; align-items: center; gap: 24px;
@@ -416,7 +698,7 @@
 #papaleta-root .ihc-left { flex: 1; min-width: 0; }
 #papaleta-root .ihc-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 #papaleta-root .ihc-right { flex-shrink: 0; }
-#papaleta-root .progress-ring { position: relative; width: 72px; height: 72px; }
+#papaleta-root .progress-ring { position: relative; width: 80px; height: 80px; }
 #papaleta-root .ring-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 #papaleta-root .ring-label { font-size: 18px; font-weight: 700; color: var(--primary); line-height: 1; letter-spacing: -.5px; }
 #papaleta-root .ring-sublabel-bottom { font-size: 9px; font-weight: 600; color: var(--text3); letter-spacing: .5px; text-transform: uppercase; margin-top: 4px; text-align: center; }
@@ -431,7 +713,13 @@
   transition: color var(--t); min-height: 1.3em;
   word-break: break-word; letter-spacing: -.4px;
 }
-#papaleta-root .idea-title:focus { color: var(--primary); outline: none; }
+#papaleta-root .idea-title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#papaleta-root .idea-title:focus { color: var(--primary); outline: none; white-space: normal; }
 #papaleta-root .idea-title:empty::before { content: 'Título de tu idea…'; color: var(--text3); font-weight: 500; }
 
 /* BUTTONS */
@@ -457,9 +745,9 @@
 
 /* ───── INPUT ZONE ───── */
 #papaleta-root .input-zone {
-  background: var(--surface); border-radius: var(--r-lg);
+  border-radius: var(--r-lg);
   overflow: hidden; margin-bottom: 16px;
-  border: 1px solid var(--border); transition: border-color var(--t);
+  transition: border-color var(--t), box-shadow var(--t);
 }
 #papaleta-root .input-zone:focus-within { border-color: var(--primary); }
 #papaleta-root .iz-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px 0; flex-wrap: wrap; gap: 8px; }
@@ -510,9 +798,9 @@
 
 /* ───── Q&A ───── */
 #papaleta-root .qa-card {
-  background: var(--surface); border-radius: var(--r-lg);
+  border-radius: var(--r-lg);
   padding: 28px; margin-bottom: 16px;
-  border: 1px solid var(--border); animation: pp-fadeUp .3s ease;
+  animation: pp-fadeUp .3s ease;
 }
 #papaleta-root .qa-progress { height: 3px; background: var(--border2); border-radius: 3px; margin-bottom: 20px; overflow: hidden; }
 #papaleta-root .qa-progress-fill { height: 3px; background: var(--primary); border-radius: 3px; transition: width .4s ease; }
@@ -540,17 +828,138 @@
 
 /* ───── RESULTS ───── */
 #papaleta-root .results { display: flex; flex-direction: column; gap: 20px; }
-#papaleta-root .hero-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+#papaleta-root .hero-section,
+#papaleta-root .doc-section,
+#papaleta-root .kanban-section,
+#papaleta-root .timeline-section {
+  border-radius: var(--r-lg); overflow: hidden;
+}
 #papaleta-root .hero-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--border2); flex-wrap: wrap; gap: 8px; }
 #papaleta-root .block-label { font-size: 12px; font-weight: 600; color: var(--text3); letter-spacing: .2px; }
-#papaleta-root .hero-wrap { min-height: 240px; display: flex; align-items: center; justify-content: center; background: var(--bg2); }
+#papaleta-root .hero-wrap {
+  aspect-ratio: 16 / 9;
+  max-height: 360px;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--bg2);
+  border-radius: var(--r);
+}
+
+#papaleta-root .hero-fallback {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(255, 106, 61, 0.18), rgba(99, 102, 241, 0.12));
+  border: 1px dashed rgba(255, 106, 61, 0.35);
+}
+
+#papaleta-root .hero-fallback-icon {
+  font-size: 2.5rem;
+  color: var(--primary);
+  opacity: 0.85;
+}
+
+#papaleta-root .hero-fallback-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+#papaleta-root .hero-fallback-msg {
+  font-size: 12px;
+  color: var(--text2);
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+#papaleta-root .hero-fallback-btn {
+  margin-top: 4px;
+  padding: 8px 18px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#papaleta-root .hero-fallback-btn:hover {
+  background: var(--primary-d);
+}
+
+#papaleta-root .ai-summary-section {
+  margin-bottom: 24px;
+  padding: 24px;
+  border-radius: var(--r-xl);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+[data-theme="dark"] #papaleta-root .ai-summary-section {
+  background: rgba(30, 30, 40, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+#papaleta-root .ai-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+#papaleta-root .ai-summary-actions {
+  display: flex;
+  gap: 8px;
+}
+
+#papaleta-root .ai-summary-view {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text2);
+  white-space: pre-wrap;
+}
+
+#papaleta-root .ai-summary-edit {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--r);
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  margin-top: 8px;
+}
+
+#papaleta-root .ai-summary-save {
+  margin-top: 12px;
+  width: auto;
+  padding: 10px 20px;
+}
 #papaleta-root .hero-loading { display: flex; gap: 10px; align-items: center; color: var(--text3); font-size: 13px; padding: 40px; }
-#papaleta-root .hero-img { width: 100%; max-height: 420px; object-fit: cover; display: block; }
+#papaleta-root .hero-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 #papaleta-root .hero-no-img { padding: 40px; text-align: center; color: var(--text3); font-size: 13px; line-height: 1.6; }
 #papaleta-root .hero-no-img button { margin-top: 10px; padding: 8px 16px; background: var(--primary); color: #fff; border-radius: var(--r-sm); font-size: 13px; font-weight: 600; }
 
 /* DOC */
-#papaleta-root .doc-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
 #papaleta-root .doc-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--border2); flex-wrap: wrap; gap: 8px; }
 #papaleta-root .doc-hint { font-size: 11px; color: var(--text3); }
 #papaleta-root .doc-toolbar { display: flex; gap: 2px; padding: 7px 14px; border-bottom: 1px solid var(--border2); background: var(--surface2); flex-wrap: wrap; }
@@ -574,12 +983,35 @@
 #papaleta-root .fm-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
 
 /* KANBAN */
-#papaleta-root .kanban-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+#papaleta-root .kanban-section { border-radius: var(--r-lg); overflow: hidden; }
 #papaleta-root .kanban-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--border2); flex-wrap: wrap; gap: 8px; }
 #papaleta-root .kanban-board { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; padding: 18px; }
 #papaleta-root .k-col { background: var(--bg2); border-radius: var(--r); padding: 12px; min-height: 140px; border: 1px solid var(--border2); }
-#papaleta-root .k-col-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 10px; }
-#papaleta-root .k-cards { min-height: 60px; display: flex; flex-direction: column; gap: 6px; }
+#papaleta-root .k-col-header,
+#papaleta-root .k-col-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--text3); margin-bottom: 10px; gap: 8px;
+}
+#papaleta-root .k-col-body,
+#papaleta-root .k-cards {
+  min-height: 60px; display: flex; flex-direction: column; gap: 6px;
+}
+#papaleta-root .k-add-btn,
+#papaleta-root .k-add {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text2); font-size: 16px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: var(--t);
+}
+#papaleta-root .k-add-btn:hover,
+#papaleta-root .k-add:hover {
+  border-color: var(--primary); color: var(--primary); background: var(--primary-l);
+}
+#papaleta-root .todo-head { color: var(--text2); }
+#papaleta-root .doing-head { color: var(--amber); }
+#papaleta-root .done-head { color: var(--green); }
 #papaleta-root .k-card {
   background: var(--surface); border-radius: var(--r-sm);
   padding: 10px 12px; font-size: 13px; font-weight: 500; color: var(--text);
@@ -593,10 +1025,37 @@
 #papaleta-root .k-add:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-l); }
 
 /* TIMELINE */
-#papaleta-root .timeline-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+#papaleta-root .timeline-section { border-radius: var(--r-lg); overflow: hidden; }
 #papaleta-root .tl-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--border2); }
 #papaleta-root .tl-list { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
 #papaleta-root .tl-empty { padding: 32px; text-align: center; color: var(--text3); font-size: 13px; }
+#papaleta-root .timeline { display: flex; flex-direction: column; gap: 14px; padding: 16px 18px; }
+#papaleta-root .tl-entry {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  border-radius: var(--r);
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+}
+#papaleta-root .tl-entry img {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  display: block;
+}
+#papaleta-root .tl-rm {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  font-size: 14px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+#papaleta-root .tl-rm:hover { color: var(--red); }
 #papaleta-root .tl-item { display: flex; gap: 14px; align-items: flex-start; }
 #papaleta-root .tl-img { width: 80px; height: 60px; object-fit: cover; border-radius: var(--r-sm); border: 1px solid var(--border); flex-shrink: 0; }
 #papaleta-root .tl-body { flex: 1; }
@@ -609,7 +1068,7 @@
   width: 52px; height: 52px; background: var(--primary); color: #fff;
   border-radius: 50%; font-size: 22px; display: flex;
   align-items: center; justify-content: center;
-  box-shadow: 0 4px 20px rgba(99,102,241,.4); transition: var(--t);
+  box-shadow: 0 4px 20px rgba(255, 106, 61, 0.35); transition: var(--t);
   cursor: pointer; border: none;
 }
 #papaleta-root .chat-fab:hover { background: var(--primary-d); transform: scale(1.06); }
@@ -617,15 +1076,27 @@
 
 #papaleta-root .chat-panel {
   position: fixed; bottom: 92px; right: 28px; z-index: 45;
-  width: 340px; max-height: 480px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-xl); box-shadow: var(--sh2);
+  width: 360px; max-height: 520px;
+  border-radius: var(--r-xl);
   display: flex; flex-direction: column; animation: pp-pop .2s ease;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
 }
-#papaleta-root .chat-header {
+[data-theme="dark"] #papaleta-root .chat-panel {
+  background: rgba(20, 20, 30, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+#papaleta-root .chat-header,
+#papaleta-root .cp-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 18px; border-bottom: 1px solid var(--border2);
+  font-size: 14px; font-weight: 700; color: var(--text);
 }
 #papaleta-root .chat-title { font-size: 14px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 7px; }
 #papaleta-root .chat-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; }
@@ -640,13 +1111,23 @@
 }
 #papaleta-root .bubble.ai { background: var(--bg2); color: var(--text); border-radius: 4px 16px 16px 16px; }
 #papaleta-root .bubble.user { background: var(--primary); color: #fff; align-self: flex-end; border-radius: 16px 4px 16px 16px; }
-#papaleta-root .chat-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--border2); align-items: flex-end; }
-#papaleta-root .chat-input {
+#papaleta-root .chat-input-row,
+#papaleta-root .cp-footer {
+  display: flex; gap: 8px; padding: 12px 14px;
+  border-top: 1px solid var(--border2); align-items: flex-end;
+}
+#papaleta-root .chat-input,
+#papaleta-root .cp-input {
   flex: 1; resize: none; border: 1px solid var(--border); border-radius: var(--r);
   padding: 9px 12px; font-family: var(--font); font-size: 13px; color: var(--text);
-  background: var(--surface); max-height: 100px; line-height: 1.5; transition: border-color var(--t);
+  background: rgba(255,255,255,0.04); max-height: 100px; line-height: 1.5;
+  transition: border-color var(--t);
 }
-#papaleta-root .chat-input:focus { outline: none; border-color: var(--primary); }
+#papaleta-root .chat-input:focus,
+#papaleta-root .cp-input:focus { outline: none; border-color: var(--primary); }
+#papaleta-root .cp-close { color: var(--text3); }
+#papaleta-root .cp-attach { color: var(--text3); font-size: 16px; }
+#papaleta-root .cp-attach:hover { color: var(--primary); }
 #papaleta-root .btn-send {
   width: 36px; height: 36px; background: var(--primary); color: #fff;
   border-radius: 50%; display: flex; align-items: center; justify-content: center;

@@ -1,0 +1,23 @@
+{
+  "name": "Papaleta",
+  "short_name": "Papaleta",
+  "description": "Tu laboratorio de ideas con IA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/papaletaarriba.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/papaletaLogok.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

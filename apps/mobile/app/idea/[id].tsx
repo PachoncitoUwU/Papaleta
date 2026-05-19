@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useIdeas } from "@/contexts/IdeasContext";
 import { useColors } from "@/hooks/useColors";
-import { aiCall } from "@/lib/groq";
+import { aiCall, buildVisualPrompt, pollinationsUrl } from "@/lib/groq";
 import type { Idea } from "@/lib/storage";
 
 type Tab = "doc" | "kanban" | "chat";
@@ -503,10 +503,28 @@ export default function IdeaDetailScreen() {
   const [tab, setTab] = useState<Tab>("doc");
   const [editingProgress, setEditingProgress] = useState(false);
   const [progressInput, setProgressInput] = useState("");
+  const [generatingImg, setGeneratingImg] = useState(false);
 
   useEffect(() => {
     if (idea) setProgressInput(String(idea.progress || 0));
   }, [idea?.id]);
+
+  async function handleGenerateImage() {
+    if (!idea) return;
+    setGeneratingImg(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const prompt = idea.imgPrompt || buildVisualPrompt(idea.rawText || idea.title || "");
+      const url = pollinationsUrl(prompt);
+      await updateField(idea.id, "imgUrl", url);
+      await updateField(idea.id, "imgPrompt", prompt);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e: any) {
+      Alert.alert("Error", "No se pudo generar la imagen.");
+    } finally {
+      setGeneratingImg(false);
+    }
+  }
 
   if (!idea) {
     return (
@@ -555,23 +573,82 @@ export default function IdeaDetailScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {idea.imgUrl ? (
-        <Image
-          source={{ uri: idea.imgUrl }}
-          style={{ width: "100%", height: 220, backgroundColor: colors.muted }}
-          resizeMode="cover"
-        />
+        <View style={{ position: "relative" }}>
+          <Image
+            source={{ uri: idea.imgUrl }}
+            style={{ width: "100%", height: 220, backgroundColor: colors.muted }}
+            resizeMode="cover"
+          />
+          {/* Botón regenerar imagen */}
+          <Pressable
+            style={({ pressed }) => ({
+              position: "absolute",
+              bottom: 10,
+              right: 10,
+              backgroundColor: "rgba(0,0,0,0.55)",
+              borderRadius: 20,
+              paddingHorizontal: 12,
+              paddingVertical: 7,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              opacity: pressed ? 0.7 : 1,
+            })}
+            onPress={handleGenerateImage}
+            disabled={generatingImg}
+          >
+            {generatingImg ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons name="refresh-outline" size={14} color="#fff" />
+            )}
+            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#fff" }}>
+              {generatingImg ? "Generando..." : "Regenerar"}
+            </Text>
+          </Pressable>
+        </View>
       ) : (
         <View
           style={{
             width: "100%",
-            height: 120,
+            height: 140,
             backgroundColor: colors.muted,
             alignItems: "center",
             justifyContent: "center",
             marginTop: insets.top + 48,
+            gap: 12,
           }}
         >
-          <Ionicons name="bulb-outline" size={48} color={colors.border} />
+          {generatingImg ? (
+            <>
+              <ActivityIndicator color={colors.primary} size="large" />
+              <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
+                Generando imagen...
+              </Text>
+            </>
+          ) : (
+            <>
+              <Ionicons name="image-outline" size={40} color={colors.border} />
+              <Pressable
+                style={({ pressed }) => ({
+                  backgroundColor: colors.primary,
+                  borderRadius: 20,
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  opacity: pressed ? 0.8 : 1,
+                })}
+                onPress={handleGenerateImage}
+              >
+                <Ionicons name="sparkles-outline" size={14} color="#fff" />
+                <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#fff" }}>
+                  Generar imagen con IA
+                </Text>
+              </Pressable>
+            </>
+          )}
         </View>
       )}
 
