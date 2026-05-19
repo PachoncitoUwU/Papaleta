@@ -282,6 +282,7 @@ export default function PapaletaApp() {
           const ix = local.findIndex((i: any) => i.id === ideaId);
           if (ix >= 0) {
             local[ix][field] = val;
+            local[ix].updatedAt = new Date().toISOString();
             localStorage.setItem("pp_ideas", JSON.stringify(local));
           }
           ideas = local;
@@ -383,12 +384,16 @@ export default function PapaletaApp() {
             $("qa-zone")?.classList.add("hidden");
             $("results")?.classList.remove("hidden");
             if ($("master-doc")) $("master-doc")!.innerHTML = idea.doc;
-            if (idea.imgPrompt) {
+            if (idea.imgUrl) {
+              lastImgPrompt = idea.imgPrompt || "";
+              const w = $("hero-wrap");
+              if (w) showHeroImg(w, idea.imgUrl);
+            } else if (idea.imgPrompt) {
               lastImgPrompt = idea.imgPrompt;
               genImg(idea.imgPrompt);
             } else if ($("hero-wrap")) {
               $("hero-wrap")!.innerHTML =
-                '<div class="hero-no-img">Sin imagen<br><button onclick="window.__regen()">🎨 Generar</button></div>';
+                '<div class="hero-fallback hero-fallback-empty"><div class="hero-fallback-icon">✨</div><p class="hero-fallback-title">Sin visual aun</p><button type="button" class="hero-fallback-btn" onclick="window.__regen()">🎨 Generar</button></div>';
             }
             if (idea.kanban) loadKanban(idea.kanban);
             renderTL(idea.timeline || []);
@@ -877,28 +882,20 @@ export default function PapaletaApp() {
           const now = new Date();
           const currentYear = now.getFullYear();
           const currentMonth = now.getMonth();
-          const monthName = now.toLocaleString("es", { month: "long" });
           const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
           const firstDayOfWeek = firstDayOfMonth.getDay();
           const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-          const dayNames = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
-          let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div style="font-size:14px;font-weight:600;text-transform:capitalize;">${monthName}, ${currentYear}</div><div style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:4px;background:var(--primary);"></div> Dias activos</div></div>`;
-          html += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center;max-width:400px;margin:0 auto;">`;
-          dayNames.forEach(day => { html += `<div style="font-size:10px;font-weight:600;color:var(--text3);margin-bottom:4px;">${day}</div>`; });
+          let html = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:300px;margin:0 auto;">`;
           for (let i = 0; i < firstDayOfWeek; i++) html += `<div></div>`;
           for (let d = 1; d <= daysInMonth; d++) {
             const date = new Date(currentYear, currentMonth, d);
             const k = date.toISOString().slice(0, 10);
             const c = h[k] || 0;
-            const isToday = date.toDateString() === now.toDateString();
-            let bg = "transparent", color = "var(--text2)", border = "1px solid var(--border)", shadow = "none";
-            if (c > 0) { const intensity = Math.min(1, 0.4 + (c * 0.15)); bg = `color-mix(in srgb, var(--primary) ${Math.round(intensity*100)}%, transparent)`; color = "white"; border = "none"; if (c > 3) shadow = "0 2px 8px rgba(99, 102, 241, 0.3)"; }
-            if (isToday) border = "2px solid var(--primary)";
-            html += `<div data-daykey="${k}" data-daycount="${c}" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:12px;font-weight:500;background:${bg};color:${color};border:${border};box-shadow:${shadow};cursor:pointer;transition:transform 0.2s;" title="${c} acciones" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" onclick="window.__dayClick(this.dataset.daykey,+this.dataset.daycount)">${d}</div>`;
+            const bg = c > 0 ? `color-mix(in srgb, var(--primary) ${Math.min(90, 40 + c*15)}%, transparent)` : "var(--border)";
+            html += `<div title="${c} acciones" style="aspect-ratio:1;border-radius:4px;background:${bg};cursor:pointer;" onclick="window.__dayClick('${k}', ${c})"></div>`;
           }
           html += `</div>`;
           hm.innerHTML = html;
-          document.querySelectorAll(".dhc-months,.dhc-days,.dhc-range,.dhc-legend").forEach(el => (el as HTMLElement).style.display = "none");
         }
 
         (window as any).__dayClick = (dateKey: string, count: number) => {
@@ -907,20 +904,18 @@ export default function PapaletaApp() {
           const date = new Date(dateKey + "T12:00:00");
           const dStr = date.toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
           const allIdeas: any[] = JSON.parse(localStorage.getItem("pp_ideas") || "[]");
-          const acts = allIdeas.filter(i => i.updatedAt && new Date(i.updatedAt).toDateString() === date.toDateString());
+          const acts = allIdeas.filter(i => i.createdAt && new Date(i.createdAt).toDateString() === date.toDateString());
           if (acts.length > 0) {
-            let inner = `<div style="width:100%;text-align:left;overflow-y:auto;max-height:220px;padding-right:8px;"><h4 style="font-size:12px;color:var(--text3);margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">${dStr}</h4><div style="display:flex;flex-direction:column;gap:8px;">`;
+            let inner = `<div style="width:100%;text-align:left;"><h4 style="font-size:12px;color:var(--text3);margin-bottom:8px;">${dStr}</h4><div style="display:flex;flex-direction:column;gap:6px;">`;
             for (const a of acts) {
-              const initials = a.title ? a.title.charAt(0).toUpperCase() : "I";
-              const thumb = a.heroImg ? `<img src="${a.heroImg}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : `<div style="width:40px;height:40px;border-radius:6px;background:var(--primary-l);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;">${initials}</div>`;
-              inner += `<div onclick="window.__loadIdea('${a.id}')" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);cursor:pointer;">${thumb}<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.title || "Idea"}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.tag || "Idea"} - ${a.progress || 0}% completado</div></div></div>`;
+              inner += `<div onclick="window.__ld('${a.id}')" style="font-size:13px;padding:8px;background:var(--bg2);border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.title || "Idea"}</div>`;
             }
             inner += `</div></div>`;
             container.innerHTML = inner;
           } else if (count > 0) {
-            container.innerHTML = `<div style="font-size:32px;margin-bottom:16px;opacity:0.8;">👻</div><p style="font-size:15px;font-weight:500;color:var(--text);">Registraste ${count} acciones el ${dStr}, pero sin modificaciones en ideas.</p>`;
+            container.innerHTML = `<p>Registraste ${count} acciones el ${dStr}, pero sin nuevas ideas.</p>`;
           } else {
-            container.innerHTML = `<div style="font-size:32px;margin-bottom:16px;opacity:0.5;filter:grayscale(1);">💤</div><p style="font-size:15px;font-weight:500;color:var(--text3);">Sin actividad registrada para el ${dStr}.</p>`;
+            container.innerHTML = `<p>Sin actividad el ${dStr}.</p>`;
           }
         };
 
@@ -1263,149 +1258,76 @@ export default function PapaletaApp() {
 
   return (
     <div id="papaleta-root" data-theme="light">
-      {/* SVG Defs for gradient */}
       <svg width="0" height="0" style={{ position: "absolute" }}>
         <defs>
           <linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#6366f1" />
             <stop offset="100%" stopColor="#06B6D4" />
           </linearGradient>
-          <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
-            <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves={1} seed={17} result="turbulence" />
-            <feComponentTransfer in="turbulence" result="mapped">
-              <feFuncR type="gamma" amplitude={1} exponent={10} offset={0.5} />
-              <feFuncG type="gamma" amplitude={0} exponent={1} offset={0} />
-              <feFuncB type="gamma" amplitude={0} exponent={1} offset={0.5} />
-            </feComponentTransfer>
-            <feGaussianBlur in="turbulence" stdDeviation={3} result="softMap" />
-            <feSpecularLighting in="softMap" surfaceScale={5} specularConstant={1} specularExponent={100} lightingColor="white" result="specLight">
-              <fePointLight x={-200} y={-200} z={300} />
-            </feSpecularLighting>
-            <feComposite in="specLight" operator="arithmetic" k1={0} k2={1} k3={1} k4={0} result="litImage" />
-            <feDisplacementMap in="SourceGraphic" in2="softMap" scale={200} xChannelSelector="R" yChannelSelector="G" />
-          </filter>
         </defs>
       </svg>
 
       {/* LOGIN */}
       <div id="login" className="login-screen">
-        <DottedSurface />
-        <div className="login-card" style={{
-          background: "rgba(255, 255, 255, 0.1)",
-          backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-        }}>
-          <img src="/papaletaarriba.png" alt="Papaleta" className="lc-logo-img" />
-          <h1 className="lc-title">Papaleta</h1>
-          <p className="lc-sub">Tu laboratorio de ideas con IA</p>
-          <div className="lc-features">
-            <div className="lcf">🔍 Analiza con preguntas inteligentes</div>
-            <div className="lcf">✨ Potencia y estructura con IA</div>
-            <div className="lcf">🗂️ Kanban interactivo</div>
-            <div className="lcf">📸 Bitácora visual de avances</div>
-          </div>
-          {/* Groq key setup */}
+        <div className="login-card" style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 32, maxWidth: 400, width: "100%" }}>
+          <h1 className="lc-title" style={{ fontSize: 24, marginBottom: 8 }}>Papaleta</h1>
+          <p className="lc-sub" style={{ fontSize: 14, color: "var(--text2)", marginBottom: 24 }}>Tu laboratorio de ideas con IA</p>
           <div style={{ marginBottom: 14, display: "flex", gap: 8 }}>
-            <input id="groq-key-input" type="password" placeholder="Groq API key (gsk_...)" style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--surface)", color: "var(--text)", fontFamily: "Inter", fontSize: 13 }} />
+            <input id="groq-key-input" type="password" placeholder="Groq API key (gsk_...)" style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text)" }} />
             <button id="btn-save-groq" style={{ padding: "10px 14px", background: "var(--primary)", color: "#fff", borderRadius: 10, fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer" }}>Guardar</button>
           </div>
-          <p style={{ fontSize: 11, color: "var(--text3)", marginBottom: 14, lineHeight: 1.5 }}>Obtén tu key gratis en <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" style={{ color: "var(--primary)" }}>console.groq.com/keys</a></p>
-          <button id="btn-login" className="btn-google">
-            <svg width="18" height="18" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.07 5.07 0 01-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09a6.97 6.97 0 010-4.18V7.07H2.18A11 11 0 001 12c0 1.78.43 3.45 1.18 4.93l3.66-2.84z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-            </svg>
-            Continuar con Google
-          </button>
-          <button id="btn-local" className="btn-local">Entrar gratis sin cuenta</button>
-          <p className="lc-note">Gratis · Sin tarjeta · Datos privados</p>
+          <button id="btn-login" className="btn-google" style={{ width: "100%", padding: 12, background: "#fff", border: "1px solid #ddd", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", marginBottom: 12 }}>Continuar con Google</button>
+          <button id="btn-local" className="btn-local" style={{ width: "100%", padding: 12, background: "var(--bg2)", border: "none", borderRadius: 10, cursor: "pointer" }}>Entrar gratis sin cuenta</button>
         </div>
       </div>
 
       {/* APP */}
       <div id="app" className="app hidden">
-        {/* MOBILE TOPBAR */}
         <div className="mobile-topbar">
           <button id="btn-hamburger" className="icon-btn">☰</button>
-          <span className="mt-logo">
-            <img src="/papaletaLogok.png" alt="Papaleta" className="mt-logo-img" /> Papaleta
-          </span>
+          <span className="mt-logo">Papaleta</span>
           <button className="icon-btn" onClick={() => document.getElementById("btn-new")?.click()}>+</button>
         </div>
 
-        {/* SIDEBAR */}
-        <div id="sb-overlay" className="sb-overlay hidden"></div>
         <aside id="sidebar" className="sidebar">
           <div className="sb-header">
-            <a href="#" onClick={(e) => { e.preventDefault(); window.showDashboard?.(); }} className="sb-logo-link">
-              <img src="/papaletaarriba.png" alt="Papaleta" className="sb-logo-img" />
-              <span className="sb-logo-text">Papaleta</span>
-            </a>
-            <button id="btn-collapse" className="icon-btn" title="Colapsar">‹</button>
+            <a href="#" onClick={(e) => { e.preventDefault(); window.showDashboard?.(); }} className="sb-logo-link">Papaleta</a>
+            <button id="btn-collapse" className="icon-btn">‹</button>
           </div>
           <button id="btn-new" className="btn-new"><span>+</span> Nueva Idea</button>
-          <div className="sb-section-label">MIS IDEAS</div>
-          <div id="ideas-nav" className="ideas-nav"><div className="empty-nav">Crea tu primera idea ✨</div></div>
+          <div id="ideas-nav" className="ideas-nav"></div>
           <div className="sb-footer">
-            <button id="btn-dark-mode" className="btn-dark-mode" title="Cambiar tema">
-              <svg className="theme-toggle-svg" width="20" height="20" viewBox="0 0 25 25" fill="none">
-                <g className="sun-icon">
-                  <path className="sun-center" d="M12.4058 17.7625C15.1672 17.7625 17.4058 15.5239 17.4058 12.7625C17.4058 10.0011 15.1672 7.76251 12.4058 7.76251C9.64434 7.76251 7.40576 10.0011 7.40576 12.7625C7.40576 15.5239 9.64434 17.7625 12.4058 17.7625Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path className="sun-ray" d="M12.4058 1.76251V3.76251" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <path className="sun-ray" d="M12.4058 21.7625V23.7625" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <path className="sun-ray" d="M4.62598 4.98248L6.04598 6.40248" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <path className="sun-ray" d="M18.7656 19.1225L20.1856 20.5425" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <path className="sun-ray" d="M1.40576 12.7625H3.40576" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <path className="sun-ray" d="M21.4058 12.7625H23.4058" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <path className="sun-ray" d="M4.62598 20.5425L6.04598 19.1225" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <path className="sun-ray" d="M18.7656 6.40248L20.1856 4.98248" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </g>
-                <path className="moon-icon" d="M21.1918 13.2013C21.0345 14.9035 20.3957 16.5257 19.35 17.8781C18.3044 19.2305 16.8953 20.2571 15.2875 20.8379C13.6797 21.4186 11.9398 21.5294 10.2713 21.1574C8.60281 20.7854 7.07479 19.9459 5.86602 18.7371C4.65725 17.5283 3.81774 16.0003 3.4457 14.3318C3.07367 12.6633 3.18451 10.9234 3.76526 9.31561C4.346 7.70783 5.37263 6.29868 6.72501 5.25307C8.07739 4.20746 9.69959 3.56862 11.4018 3.41132C10.4052 4.75958 9.92564 6.42077 10.0503 8.09273C10.175 9.76469 10.8957 11.3364 12.0812 12.5219C13.2667 13.7075 14.8384 14.4281 16.5104 14.5528C18.1823 14.6775 19.8435 14.1979 21.1918 13.2013Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <div id="uavatar" className="u-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}></div>
-            <span id="uname" className="u-name">—</span>
-            <button id="btn-logout" className="icon-btn" title="Salir">⇥</button>
+            <button id="btn-dark-mode" className="icon-btn">🌓</button>
+            <div id="uavatar" className="u-avatar"></div>
+            <button id="btn-logout" className="icon-btn">⇥</button>
           </div>
         </aside>
 
-        {/* MAIN */}
         <main id="main" className="main">
           {/* DASHBOARD */}
           <div id="dashboard" className="dashboard">
-            <div className="dash-profile-header">
-              <div id="user-profile-pic" className="user-profile-pic">
-                <div className="profile-initials">U</div>
-              </div>
-              <div>
-                <h1 id="user-greeting" className="user-greeting">Hola Usuario, ¿qué ideas tienes hoy?</h1>
-                <p style={{ fontSize: 15, color: "var(--text2)", marginTop: 4 }}>Tu Laboratorio de Ideas</p>
-              </div>
-            </div>
             <div className="dash-stats-grid">
-              <div className="stat-card"><div className="stat-icon">💡</div><div className="stat-value" id="stat-total">0</div><div className="stat-label">Ideas Creadas</div></div>
-              <div className="stat-card"><div className="stat-icon">⚡</div><div className="stat-value" id="stat-progress">0</div><div className="stat-label">En Progreso</div></div>
-              <div className="stat-card"><div className="stat-icon">✅</div><div className="stat-value" id="stat-completed">0</div><div className="stat-label">Completadas</div></div>
-              <div className="stat-card"><div className="stat-icon">🔥</div><div className="stat-value" id="stat-streak">0</div><div className="stat-label">Días Seguidos</div></div>
+              <div className="stat-card">💡 <span id="stat-total">0</span> Ideas</div>
+              <div className="stat-card">⚡ <span id="stat-progress">0</span> En Progreso</div>
+              <div className="stat-card">✅ <span id="stat-completed">0</span> Completadas</div>
+              <div className="stat-card">🔥 <span id="stat-streak">0</span> Días</div>
             </div>
-            <div className="dash-heatmap-card">
-              <div className="dhc-header">
-                <div className="dhc-title"><span className="dhc-icon">📅</span><span>Tu Actividad</span></div>
-                <span id="dhc-total" className="dhc-total">0 acciones</span>
-              </div>
-              <div className="dhc-months" id="dhc-months"></div>
-              <div className="dhc-grid">
-                <div className="dhc-days">
-                  <span></span><span>Lun</span><span></span><span>Mié</span><span></span><span>Vie</span><span></span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: 28 }}>
+              <div className="dash-heatmap-card">
+                <div className="dhc-header">
+                  <div className="dhc-title"><span className="dhc-icon">📅</span><span>Tu Actividad</span></div>
+                  <span id="dhc-total" className="dhc-total">0 acciones</span>
                 </div>
-                <div id="heatmap" className="dhc-heatmap"></div>
+                <div id="heatmap" style={{ width: '100%' }}></div>
               </div>
-              <div className="dhc-legend">
-                <span>Menos</span>
-                <div className="hm-cell"></div><div className="hm-cell l1"></div><div className="hm-cell l2"></div><div className="hm-cell l3"></div><div className="hm-cell l4"></div>
-                <span>Más</span>
+              <div className="dash-heatmap-card">
+                <div className="dhc-header">
+                  <div className="dhc-title"><span className="dhc-icon">📊</span><span>Detalle del Dia</span></div>
+                </div>
+                <div id="day-activity-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, color: 'var(--text3)', fontSize: 14, textAlign: 'center', padding: 16 }}>
+                  <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>📆</div>
+                  <p>Toca un dia en el calendario para ver tu actividad</p>
+                </div>
               </div>
             </div>
             <div className="dash-ideas-section">
@@ -1413,13 +1335,7 @@ export default function PapaletaApp() {
                 <h2 className="dis-title">💡 Ideas Potenciadas</h2>
                 <span id="dis-count" className="dis-count">0 ideas</span>
               </div>
-              <div id="ideas-grid" className="ideas-grid">
-                <div className="ideas-empty">
-                  <div className="ie-icon">✨</div>
-                  <p className="ie-text">Aún no has creado ninguna idea.<br />¡Empieza ahora y potencia tus proyectos con IA!</p>
-                  <button className="btn-primary" onClick={() => document.getElementById("btn-new")?.click()}><span>+</span> Crear Primera Idea</button>
-                </div>
-              </div>
+              <div id="ideas-grid" className="ideas-grid"></div>
             </div>
             <div className="dash-cta">
               <button className="btn-primary btn-large" onClick={() => document.getElementById("btn-new")?.click()}><span>✨</span> Crear Nueva Idea</button>
