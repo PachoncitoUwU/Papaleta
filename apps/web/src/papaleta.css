@@ -602,8 +602,17 @@
   border-radius: var(--r-lg);
   padding: 24px 20px; text-align: center;
   transition: var(--t);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(31, 38, 135, 0.06);
 }
-#papaleta-root .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--sh); }
+[data-theme="dark"] #papaleta-root .stat-card {
+  background: rgba(30, 30, 40, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+#papaleta-root .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99,102,241,0.15); }
 #papaleta-root .stat-icon { font-size: 26px; margin-bottom: 10px; }
 #papaleta-root .stat-value { font-size: 30px; font-weight: 700; color: var(--primary); margin-bottom: 4px; letter-spacing: -.5px; }
 #papaleta-root .stat-label { font-size: 12px; color: var(--text3); font-weight: 500; }
@@ -663,8 +672,17 @@
   border-radius: var(--r-lg);
   overflow: hidden;
   transition: var(--t); cursor: pointer; animation: pp-fadeUp .3s ease;
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 20px rgba(31, 38, 135, 0.06);
 }
-#papaleta-root .idea-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--sh2); }
+[data-theme="dark"] #papaleta-root .idea-card {
+  background: rgba(25, 25, 35, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+#papaleta-root .idea-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 12px 36px rgba(99,102,241,0.18); }
 #papaleta-root .ic-image {
   width: 100%;
   height: 12rem;

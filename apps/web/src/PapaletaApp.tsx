@@ -120,25 +120,25 @@ export default function PapaletaApp() {
 
         const IMG_API_KEY_STORAGE = "pp_pollinations_key";
 
-        const PAPALETA_AVANCE_PROMPT = `Eres el Asistente de IA de "Papaleta", un laboratorio y gestor de ideas donde los usuarios registran proyectos, avances y bitácoras. Actúa como copiloto de innovación y documentación técnica.
+        const PAPALETA_AVANCE_PROMPT = `Eres el Asistente de IA de "Papaleta", un laboratorio y gestor de ideas donde los usuarios registran proyectos, avances y bitÃ¡coras. ActÃºa como copiloto de innovaciÃ³n y documentaciÃ³n tÃ©cnica.
 
-Cuando el usuario proporcione texto de avance, bitácora o estado del proyecto, responde SIEMPRE con esta estructura en Markdown:
+Cuando el usuario proporcione texto de avance, bitÃ¡cora o estado del proyecto, responde SIEMPRE con esta estructura en Markdown:
 
-### 📝 Mini-Resumen de Avance
-[Resumen de máximo 2 o 3 líneas: logro principal y estado actual].
+### ðŸ“ Mini-Resumen de Avance
+[Resumen de mÃ¡ximo 2 o 3 lÃ­neas: logro principal y estado actual].
 
-### 🎯 Estado de la Idea
+### ðŸŽ¯ Estado de la Idea
 * **Progreso estimado:** [0-100%]
 * **Enfoque actual:** [una frase corta]
 
-### 🚀 Próximos Pasos Sugeridos
-1. [Acción inmediata]
-2. [Validación o prueba]
+### ðŸš€ PrÃ³ximos Pasos Sugeridos
+1. [AcciÃ³n inmediata]
+2. [ValidaciÃ³n o prueba]
 
-### ⚠️ Riesgos u Obstáculos detectados
+### âš ï¸ Riesgos u ObstÃ¡culos detectados
 * [Riesgo o "Ninguno relevante por ahora"]
 
-REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Viñetas y negritas para escaneo rápido.`;
+REGLAS: directo, tÃ©cnico, motivador, minimalista. Sin introducciones largas. ViÃ±etas y negritas para escaneo rÃ¡pido.`;
 
         const toast = (m: string, ms = 3000) => {
           let t = document.getElementById("papaleta-toast");
@@ -209,7 +209,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
           return roadmap.map((t) => String(t || "").trim()).filter((t) => t.length > 2).slice(0, 12);
         }
         function parseMiniResumen(md: string) {
-          const m = md.match(/### 📝 Mini-Resumen de Avance\s*\n+([\s\S]*?)(?=\n###|$)/i);
+          const m = md.match(/### ðŸ“ Mini-Resumen de Avance\s*\n+([\s\S]*?)(?=\n###|$)/i);
           return (m ? m[1] : md).trim().slice(0, 600);
         }
         function buildSummarySource(idea: any) {
@@ -221,7 +221,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
             .replace(/\s+/g, " ")
             .trim()
             .slice(0, 2800);
-          return `Título: ${idea.title || "Idea"}\nProgreso: ${idea.progress || 0}%\nEtiqueta: ${idea.tag || ""}\n\nDocumento:\n${doc}\n\nBitácora:\n${tl || "(sin entradas aún)"}`;
+          return `TÃ­tulo: ${idea.title || "Idea"}\nProgreso: ${idea.progress || 0}%\nEtiqueta: ${idea.tag || ""}\n\nDocumento:\n${doc}\n\nBitÃ¡cora:\n${tl || "(sin entradas aÃºn)"}`;
         }
         async function generateAiSummary(sourceText: string) {
           const raw = await aiCall(`${PAPALETA_AVANCE_PROMPT}\n\n---\nCONTENIDO DEL PROYECTO:\n${sourceText}`);
@@ -239,7 +239,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
           sec.classList.remove("hidden");
           const mini =
             idea.aiSummary ||
-            "Aún no hay resumen. Pulsa «Regenerar resumen» o añade avances en la bitácora.";
+            "AÃºn no hay resumen. Pulsa Â«Regenerar resumenÂ» o aÃ±ade avances en la bitÃ¡cora.";
           view.textContent = mini;
           view.classList.remove("hidden");
           edit.classList.add("hidden");
@@ -253,15 +253,15 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
           const source = buildSummarySource(idea);
           if (source.length < 50) return;
           try {
-            if (!opts?.silent) toast("🤖 Generando resumen de IA…", 5000);
+            if (!opts?.silent) toast("ðŸ¤– Generando resumen de IAâ€¦", 5000);
             const { mini, full } = await generateAiSummary(source);
             await sF("aiSummary", mini);
             await sF("aiSummaryFull", full);
             ideas = JSON.parse(localStorage.getItem("pp_ideas") || "[]");
             renderAiSummary(ideas.find((i) => i.id === ideaId));
-            if (!opts?.silent) toast("✅ Resumen guardado");
+            if (!opts?.silent) toast("âœ… Resumen guardado");
           } catch (e: any) {
-            if (!opts?.silent) toast("❌ " + e.message);
+            if (!opts?.silent) toast("âŒ " + e.message);
           }
         }
         function updateUserProfile(u: any) {
@@ -274,9 +274,16 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
               .slice(0, 2)
               .toUpperCase() || "U";
           if ($("uname")) $("uname")!.textContent = firstName;
-          if ($("uavatar")) ($("uavatar") as HTMLImageElement).src = u.photoURL || "";
+          const _uav = $("uavatar");
+          if (_uav) {
+            if (u.photoURL) {
+              _uav.innerHTML = `<img src="${u.photoURL}" alt="${firstName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            } else {
+              _uav.innerHTML = `<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--primary);color:#fff;border-radius:50%;font-size:13px;font-weight:700;">${initials}</span>`;
+            }
+          }
           if ($("user-greeting"))
-            $("user-greeting")!.textContent = `Hola ${firstName}, ¿qué ideas tienes hoy?`;
+            $("user-greeting")!.textContent = `Hola ${firstName}, Â¿quÃ© ideas tienes hoy?`;
           const profilePic = $("user-profile-pic");
           if (profilePic) {
             if (u.photoURL) {
@@ -286,7 +293,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
             }
           }
           const badge = $("sb-session-badge");
-          if (badge) badge.textContent = u.uid === "local" ? "● Sesión local" : "● Sesión activa";
+          if (badge) badge.textContent = u.uid === "local" ? "â— SesiÃ³n local" : "â— SesiÃ³n activa";
         }
 
         function showDashboard() {
@@ -326,31 +333,35 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
           if ($("dis-count"))
             $("dis-count")!.textContent = `${ideas.length} ${ideas.length === 1 ? "idea" : "ideas"}`;
           if (!ideas.length) {
-            grid.innerHTML = `<div class="ideas-empty"><div class="ie-icon">✨</div><p class="ie-text">Aún no has creado ninguna idea.<br>¡Empieza ahora y potencia tus proyectos con IA!</p><button class="btn-primary" onclick="document.getElementById('btn-new').click()"><span>+</span> Crear Primera Idea</button></div>`;
+            grid.innerHTML = `<div class="ideas-empty"><div class="ie-icon">âœ¨</div><p class="ie-text">AÃºn no has creado ninguna idea.<br>Â¡Empieza ahora y potencia tus proyectos con IA!</p><button class="btn-primary" onclick="document.getElementById('btn-new').click()"><span>+</span> Crear Primera Idea</button></div>`;
             return;
           }
-          const sorted = [...ideas].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-          grid.innerHTML = sorted
-            .map((idea) => {
-              const date = idea.createdAt
-                ? new Date(idea.createdAt).toLocaleDateString("es", {
-                    day: "numeric",
-                    month: "short",
-                  })
-                : "Hoy";
-              const pct = idea.progress || 0;
-              const done = pct >= 100;
-              const status = done
-                ? '<span class="ic-status ic-status-done">Completada</span>'
-                : pct > 0
-                  ? '<span class="ic-status ic-status-progress">En progreso</span>'
-                  : "";
-              const hasImage = idea.imgPrompt || idea.imgUrl;
-              return `<div class="idea-card${done ? " idea-card-done" : ""}" onclick="window.__ld('${idea.id}')"><div class="ic-image">${hasImage || idea.imgUrl ? `<img src="${idea.imgUrl || "https://picsum.photos/seed/" + idea.id + "/400/192"}" alt="${idea.title || "Idea"}" loading="lazy" onerror="this.onerror=null;this.parentElement.innerHTML='<div class="ic-image-placeholder">💡</div>'"/>` : `<div class="ic-image-placeholder">💡</div>`}</div><div class="ic-body">${status}<div class="ic-header"><span class="ic-tag">${idea.tag || "Idea"}</span><span class="ic-progress">${pct}%</span></div><h3 class="ic-title">${idea.title || "Sin título"}</h3><div class="ic-date">${date}</div></div></div>`;
-            })
-            .join("");
+          const sorted2 = [...ideas].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+          grid.innerHTML = sorted2.map((idea) => {
+            const date = idea.createdAt ? new Date(idea.createdAt).toLocaleDateString("es", { day: "numeric", month: "short" }) : "Hoy";
+            const pct = idea.progress || 0;
+            const done = pct >= 100;
+            const statusHtml = done ? '<span class="ic-status ic-status-done">Completada</span>' : pct > 0 ? '<span class="ic-status ic-status-progress">En progreso</span>' : "";
+            let thumbHtml: string;
+            if (idea.imgUrl) {
+              const safeUrl = idea.imgUrl.replace(/"/g, "&quot;");
+              const safeTitle = (idea.title || "Idea").replace(/"/g, "&quot;");
+              thumbHtml = `<img src="${safeUrl}" alt="${safeTitle}" loading="lazy" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div class=\\'ic-image-placeholder\\'>ðŸ’¡</div>'">`;
+            } else {
+              thumbHtml = '<div class="ic-image-placeholder">ðŸ’¡</div>';
+            }
+            const safeId = idea.id.replace(/'/g, "\\'");
+            return [
+              `<div class="idea-card${done ? " idea-card-done" : ""}" onclick="window.__ld('${safeId}')">`,
+              `<div class="ic-image">${thumbHtml}</div>`,
+              `<div class="ic-body">${statusHtml}`,
+              `<div class="ic-header"><span class="ic-tag">${idea.tag || "Idea"}</span><span class="ic-progress">${pct}%</span></div>`,
+              `<h3 class="ic-title">${idea.title || "Sin tÃ­tulo"}</h3>`,
+              `<div class="ic-date">${date}</div>`,
+              `</div></div>`,
+            ].join("");
+          }).join("");
         }
-
         async function loadIdeas() {
           ideas = JSON.parse(localStorage.getItem("pp_ideas") || "[]").filter(
             (i: any) => i.uid === user?.uid || i.uid === "local"
@@ -400,7 +411,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
         async function saveNew(data: any) {
           const p = {
             uid: user?.uid || "local",
-            title: data.title || "Sin título",
+            title: data.title || "Sin tÃ­tulo",
             tag: data.tag || "Idea",
             rawText: qaText,
             doc: data.doc || "",
@@ -447,13 +458,13 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
           const list = $("ideas-nav");
           if (!list) return;
           if (!ideas.length) {
-            list.innerHTML = '<div class="empty-nav">Crea tu primera idea ✨</div>';
+            list.innerHTML = '<div class="empty-nav">Crea tu primera idea âœ¨</div>';
             return;
           }
           list.innerHTML = ideas
             .map(
               (i) =>
-                `<div class="idea-nav-item${i.id === ideaId ? " active" : ""}" onclick="window.__ld('${i.id}')"><div class="ini-title">${i.title || "Sin título"}</div><div class="ini-meta"><span class="ini-tag">${i.tag || "Idea"}</span><span class="ini-pct">${i.progress || 0}%</span></div></div>`
+                `<div class="idea-nav-item${i.id === ideaId ? " active" : ""}" onclick="window.__ld('${i.id}')"><div class="ini-title">${i.title || "Sin tÃ­tulo"}</div><div class="ini-meta"><span class="ini-tag">${i.tag || "Idea"}</span><span class="ini-pct">${i.progress || 0}%</span></div></div>`
             )
             .join("");
         }
@@ -472,7 +483,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
         function loadWS(idea: any) {
           $("dashboard")?.classList.add("hidden");
           $("workspace")?.classList.remove("hidden");
-          if ($("idea-title")) $("idea-title")!.textContent = idea.title || "Sin título";
+          if ($("idea-title")) $("idea-title")!.textContent = idea.title || "Sin tÃ­tulo";
           if ($("idea-tag")) $("idea-tag")!.textContent = idea.tag || "Idea";
           if ($("idea-date"))
             $("idea-date")!.textContent = idea.createdAt
@@ -493,7 +504,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
               genImg(idea.imgPrompt);
             } else if ($("hero-wrap")) {
               $("hero-wrap")!.innerHTML =
-                '<div class="hero-fallback hero-fallback-empty"><div class="hero-fallback-icon">✦</div><p class="hero-fallback-title">Sin visual aún</p><button type="button" class="hero-fallback-btn" onclick="window.__regen()">🎨 Generar</button></div>';
+                '<div class="hero-fallback hero-fallback-empty"><div class="hero-fallback-icon">âœ¦</div><p class="hero-fallback-title">Sin visual aÃºn</p><button type="button" class="hero-fallback-btn" onclick="window.__regen()">ðŸŽ¨ Generar</button></div>';
             }
             if (idea.kanban) loadKanban(idea.kanban);
             renderTL(idea.timeline || []);
@@ -506,7 +517,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
           resetChat();
           addBubble(
             "ai",
-            `Estás en **${idea.title || "tu idea"}**. Puedo editar el documento, agregar tareas o actualizar progreso. 🚀`
+            `EstÃ¡s en **${idea.title || "tu idea"}**. Puedo editar el documento, agregar tareas o actualizar progreso. ðŸš€`
           );
         }
 
@@ -543,7 +554,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
           if (!text && !imgB64) { toast("Escribe tu idea primero"); return; }
           const btn = $("btn-analyze") as HTMLButtonElement;
           btn.disabled = true;
-          if ($("analyze-lbl")) $("analyze-lbl")!.textContent = "Analizando…";
+          if ($("analyze-lbl")) $("analyze-lbl")!.textContent = "Analizandoâ€¦";
           $("analyze-spin")?.classList.remove("hidden");
           qaText = text;
           qaImg = imgB64;
@@ -551,7 +562,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
           qaA = [];
           try {
             const raw = await aiCall(
-              `Idea: "${text}"${imgB64 ? "\n[Imagen]" : ""}.\nHaz 4-5 preguntas cortas y específicas (español) sobre mercado, recursos, diferencial.\nSOLO JSON: {"questions":["P1?","P2?"]}`,
+              `Idea: "${text}"${imgB64 ? "\n[Imagen]" : ""}.\nHaz 4-5 preguntas cortas y especÃ­ficas (espaÃ±ol) sobre mercado, recursos, diferencial.\nSOLO JSON: {"questions":["P1?","P2?"]}`,
               imgB64
             );
             qaQ =
@@ -563,7 +574,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
               ).questions || [];
             if (qaQ.length) {
               btn.disabled = false;
-              if ($("analyze-lbl")) $("analyze-lbl")!.textContent = "🔍 Analizar con IA";
+              if ($("analyze-lbl")) $("analyze-lbl")!.textContent = "ðŸ” Analizar con IA";
               $("analyze-spin")?.classList.add("hidden");
               showQA(0);
               return;
@@ -572,7 +583,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
             qaQ = buildFreeQuestions(text);
             if (qaQ.length) {
               btn.disabled = false;
-              if ($("analyze-lbl")) $("analyze-lbl")!.textContent = "🔍 Analizar con IA";
+              if ($("analyze-lbl")) $("analyze-lbl")!.textContent = "ðŸ” Analizar con IA";
               $("analyze-spin")?.classList.add("hidden");
               showQA(0);
               toast("Modo gratis local: preguntas generadas sin API");
@@ -580,7 +591,7 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
             }
           }
           btn.disabled = false;
-          if ($("analyze-lbl")) $("analyze-lbl")!.textContent = "🔍 Analizar con IA";
+          if ($("analyze-lbl")) $("analyze-lbl")!.textContent = "ðŸ” Analizar con IA";
           $("analyze-spin")?.classList.add("hidden");
           runFull(text, imgB64, []);
         }
@@ -596,14 +607,14 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
             runFull(qaText, qaImg, qaA);
             return;
           }
-          z.innerHTML = `<div class="qa-card"><div class="qa-counter">PREGUNTA ${idx + 1} DE ${qaQ.length}</div><div class="qa-progress"><div class="qa-progress-fill" style="width:${(idx / qaQ.length) * 100}%"></div></div><div class="qa-question">${qaQ[idx]}</div><textarea class="qa-textarea" id="qa-ans" placeholder="Tu respuesta…"></textarea><div class="qa-actions"><button class="qa-skip" onclick="window.__qs(${idx})">Omitir</button><button class="qa-next" onclick="window.__qn(${idx})">Siguiente →</button></div></div>`;
+          z.innerHTML = `<div class="qa-card"><div class="qa-counter">PREGUNTA ${idx + 1} DE ${qaQ.length}</div><div class="qa-progress"><div class="qa-progress-fill" style="width:${(idx / qaQ.length) * 100}%"></div></div><div class="qa-question">${qaQ[idx]}</div><textarea class="qa-textarea" id="qa-ans" placeholder="Tu respuestaâ€¦"></textarea><div class="qa-actions"><button class="qa-skip" onclick="window.__qs(${idx})">Omitir</button><button class="qa-next" onclick="window.__qn(${idx})">Siguiente â†’</button></div></div>`;
           const qaAns = $("qa-ans") as HTMLTextAreaElement;
           qaAns?.focus();
           if (qaAns) qaAns.onkeydown = (e: KeyboardEvent) => { if (e.key === "Enter" && e.ctrlKey) window.__qn(idx); };
         }
 
         window.__qn = (i: number) => {
-          qaA.push({ q: qaQ[i], a: ($("qa-ans") as HTMLTextAreaElement)?.value.trim() || "(vacío)" });
+          qaA.push({ q: qaQ[i], a: ($("qa-ans") as HTMLTextAreaElement)?.value.trim() || "(vacÃ­o)" });
           showQA(i + 1);
         };
         window.__qs = (i: number) => {
@@ -616,16 +627,16 @@ REGLAS: directo, técnico, motivador, minimalista. Sin introducciones largas. Vi
           $("input-zone")?.classList.add("hidden");
           $("results")?.classList.remove("hidden");
           if ($("hero-wrap"))
-            $("hero-wrap")!.innerHTML = '<div class="hero-loading"><span class="spin"></span> Generando imagen…</div>';
+            $("hero-wrap")!.innerHTML = '<div class="hero-loading"><span class="spin"></span> Generando imagenâ€¦</div>';
           const ctx = ans.length
-            ? `\nCONTEXTO:\n${ans.map((a) => `• ${a.q} → ${a.a}`).join("\n")}`
+            ? `\nCONTEXTO:\n${ans.map((a) => `â€¢ ${a.q} â†’ ${a.a}`).join("\n")}`
             : "";
           try {
             const raw = await aiCall(
-              `Eres un experto en diseño de producto y negocios. Vas a analizar la idea del usuario y responder ESTRICTAMENTE con un solo objeto JSON válido.
+              `Eres un experto en diseÃ±o de producto y negocios. Vas a analizar la idea del usuario y responder ESTRICTAMENTE con un solo objeto JSON vÃ¡lido.
 REGLAS PARA EL CAMPO "doc": DEBE estar formateado en HTML (usa etiquetas <br>, <h3>, <p>, <ul>, <li>, <strong>). PROHIBIDO usar Markdown (* o ** o #). Haz que el documento sea extenso, detallado, motivador y coherente.
 Formato esperado:
-{"title":"Título llamativo","tag":"App|Negocio|Proyecto|Otro","doc":"<h3>🎯 Qué es</h3><p>...</p><h3>💡 Solución</h3><p>...</p><h3>🛠️ Materiales</h3><ul><li>...</li></ul><h3>📋 Pasos</h3><ol><li>...</li></ol><h3>💰 Monetización</h3><p>...</p><h3>⚠️ Riesgos</h3><ul><li>...</li></ul>","imgPrompt":"English prompt for photorealistic product mockup","roadmap":["Tarea 1","Tarea 2","Tarea 3","Tarea 4","Tarea 5"]}
+{"title":"TÃ­tulo llamativo","tag":"App|Negocio|Proyecto|Otro","doc":"<h3>ðŸŽ¯ QuÃ© es</h3><p>...</p><h3>ðŸ’¡ SoluciÃ³n</h3><p>...</p><h3>ðŸ› ï¸ Materiales</h3><ul><li>...</li></ul><h3>ðŸ“‹ Pasos</h3><ol><li>...</li></ol><h3>ðŸ’° MonetizaciÃ³n</h3><p>...</p><h3>âš ï¸ Riesgos</h3><ul><li>...</li></ul>","imgPrompt":"English prompt for photorealistic product mockup","roadmap":["Tarea 1","Tarea 2","Tarea 3","Tarea 4","Tarea 5"]}
 IDEA DEL USUARIO: ${text}${ctx}`,
               img
             );
@@ -640,7 +651,7 @@ IDEA DEL USUARIO: ${text}${ctx}`,
             d.rawText = text;
             await saveNew({ ...d, kanban: getKanbanState() });
             logAct();
-            toast("✅ ¡Idea analizada!");
+            toast("âœ… Â¡Idea analizada!");
             refreshIdeaSummary({ silent: true });
           } catch (e: any) {
             const d = buildFreeIdea(text, ans);
@@ -654,7 +665,7 @@ IDEA DEL USUARIO: ${text}${ctx}`,
             d.rawText = text;
             await saveNew({ ...d, kanban: getKanbanState() });
             logAct();
-            toast("✅ Idea creada en modo gratis local");
+            toast("âœ… Idea creada en modo gratis local");
             refreshIdeaSummary({ silent: true });
           }
         }
@@ -662,11 +673,11 @@ IDEA DEL USUARIO: ${text}${ctx}`,
         function buildFreeQuestions(text: string) {
           if ((text || "").trim().length < 12) return [];
           return [
-            "¿Para quién es esta idea?",
-            "¿Qué problema resuelve de forma concreta?",
-            "¿Qué materiales, recursos o habilidades tienes ya?",
-            "¿Qué la haría diferente a otras opciones?",
-            "¿Cuál sería el primer prototipo pequeño que puedes probar?",
+            "Â¿Para quiÃ©n es esta idea?",
+            "Â¿QuÃ© problema resuelve de forma concreta?",
+            "Â¿QuÃ© materiales, recursos o habilidades tienes ya?",
+            "Â¿QuÃ© la harÃ­a diferente a otras opciones?",
+            "Â¿CuÃ¡l serÃ­a el primer prototipo pequeÃ±o que puedes probar?",
           ];
         }
 
@@ -682,13 +693,13 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           const clean = (text || "Idea nueva").trim();
           const short = clean.split(/[.!?\n]/)[0].slice(0, 70).trim() || "Idea nueva";
           const ctx = ans
-            .filter((a) => a.a && !/omitido|vacío/.test(a.a))
+            .filter((a) => a.a && !/omitido|vacÃ­o/.test(a.a))
             .map((a) => `<li><strong>${escapeHTML(a.q)}</strong> ${escapeHTML(a.a)}</li>`)
             .join("");
           const title = toTitle(short);
           const tag = detectSpanishTag(clean);
-          const doc = `<h3>Qué es</h3><p>${escapeHTML(clean)}</p><h3>Enfoque</h3><p>Convierte la idea en un prototipo simple, visible y comprobable antes de gastar dinero.</p>${ctx ? `<h3>Respuestas clave</h3><ul>${ctx}</ul>` : ""}<h3>Primeros pasos</h3><ol><li>Definir el usuario principal.</li><li>Hacer un boceto o maqueta rápida.</li><li>Probarlo con una persona real.</li><li>Anotar qué funcionó y qué hay que ajustar.</li></ol><h3>Riesgos</h3><ul><li>Intentar hacerlo demasiado grande al inicio.</li><li>No validar si alguien realmente lo necesita.</li></ul>`;
-          return { title, tag, doc, imgPrompt: buildVisualPrompt(clean), roadmap: ["Definir usuario principal", "Bocetar la solución", "Crear prototipo simple", "Probar con alguien real", "Mejorar con feedback"] };
+          const doc = `<h3>QuÃ© es</h3><p>${escapeHTML(clean)}</p><h3>Enfoque</h3><p>Convierte la idea en un prototipo simple, visible y comprobable antes de gastar dinero.</p>${ctx ? `<h3>Respuestas clave</h3><ul>${ctx}</ul>` : ""}<h3>Primeros pasos</h3><ol><li>Definir el usuario principal.</li><li>Hacer un boceto o maqueta rÃ¡pida.</li><li>Probarlo con una persona real.</li><li>Anotar quÃ© funcionÃ³ y quÃ© hay que ajustar.</li></ol><h3>Riesgos</h3><ul><li>Intentar hacerlo demasiado grande al inicio.</li><li>No validar si alguien realmente lo necesita.</li></ul>`;
+          return { title, tag, doc, imgPrompt: buildVisualPrompt(clean), roadmap: ["Definir usuario principal", "Bocetar la soluciÃ³n", "Crear prototipo simple", "Probar con alguien real", "Mejorar con feedback"] };
         }
 
         function detectSpanishTag(text: string) {
@@ -707,21 +718,23 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           return localStorage.getItem(IMG_API_KEY_STORAGE) || "";
         }
 
-        function buildVisualPrompt(text: string) {
+        function buildVisualPrompt(text: string, title?: string) {
+          const subject = (title || text).slice(0, 120);
           const keywords = extractKeywords(text);
-          return `High quality realistic concept image, useful prototype visualization, ${keywords}, clean composition, natural light, detailed, no text, no watermark`;
+          // Always write the prompt in English for best Pollinations results
+          return `photorealistic product concept mockup: ${subject}. style: clean studio photography, soft natural light, high detail, professional composition, ${keywords}, no text, no watermark`;
         }
 
         function extractKeywords(text: string) {
           const dict: Record<string, string> = {
-            antena: "antenna", casera: "homemade", celular: "cellular", móvil: "mobile",
-            cafetería: "coffee", moderna: "modern", acogedor: "cozy", ambiente: "atmosphere",
-            mochila: "backpack", ecológica: "ecological", reciclado: "recycled", materiales: "materials",
-            proyecto: "project", negocio: "business", app: "app", aplicación: "application",
-            tecnología: "technology", prototipo: "prototype", diseño: "design", producto: "product",
-            idea: "idea", innovación: "innovation", startup: "startup", emprendimiento: "entrepreneurship",
+            antena: "antenna", casera: "homemade", celular: "cellular", mÃ³vil: "mobile",
+            cafeterÃ­a: "coffee", moderna: "modern", acogedor: "cozy", ambiente: "atmosphere",
+            mochila: "backpack", ecolÃ³gica: "ecological", reciclado: "recycled", materiales: "materials",
+            proyecto: "project", negocio: "business", app: "app", aplicaciÃ³n: "application",
+            tecnologÃ­a: "technology", prototipo: "prototype", diseÃ±o: "design", producto: "product",
+            idea: "idea", innovaciÃ³n: "innovation", startup: "startup", emprendimiento: "entrepreneurship",
           };
-          const words = text.toLowerCase().replace(/[^\wáéíóúñü\s]/g, "").split(/\s+/).filter((w) => w.length > 3).slice(0, 6);
+          const words = text.toLowerCase().replace(/[^\wÃ¡Ã©Ã­Ã³ÃºÃ±Ã¼\s]/g, "").split(/\s+/).filter((w) => w.length > 3).slice(0, 6);
           const translated = words.map((w) => dict[w] || w);
           const category = detectCategory(text);
           if (category) translated.unshift(category);
@@ -732,15 +745,15 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           const lower = text.toLowerCase();
           if (/tecnolog|electr|circuit|arduino|raspberry|sensor|iot/i.test(lower)) return "technology";
           if (/negocio|empresa|startup|comercio|tienda|venta/i.test(lower)) return "business";
-          if (/app|aplicaci|software|web|móvil|digital/i.test(lower)) return "application";
-          if (/diseño|arte|gráfico|visual|creativ/i.test(lower)) return "design";
+          if (/app|aplicaci|software|web|mÃ³vil|digital/i.test(lower)) return "application";
+          if (/diseÃ±o|arte|grÃ¡fico|visual|creativ/i.test(lower)) return "design";
           if (/product|manufactur|fabricaci|construcci/i.test(lower)) return "product";
           return "";
         }
 
         function buildPollinationsUrl(prompt: string, width: number, height: number, model: string) {
           const seed = Math.floor(Math.random() * 9999999);
-          // nologo=true is a PAID feature — causes 403 without auth
+          // nologo=true is a PAID feature â€” causes 403 without auth
           const enc = encodeURIComponent(prompt.slice(0, 280));
           const params = `?width=${width}&height=${height}&seed=${seed}&model=${model}`;
           // In local dev, use the Vite proxy to avoid CORS 403
@@ -759,7 +772,7 @@ IDEA DEL USUARIO: ${text}${ctx}`,
             fetch(url, { signal: controller.signal, referrerPolicy: "no-referrer" })
               .then(res => {
                 clearTimeout(timer);
-                console.log(`[Papaleta IMG] ${res.status} — ${url.slice(0, 80)}…`);
+                console.log(`[Papaleta IMG] ${res.status} â€” ${url.slice(0, 80)}â€¦`);
                 if (!res.ok) reject(new Error(`HTTP ${res.status}`));
                 else return res.blob();
               })
@@ -778,9 +791,9 @@ IDEA DEL USUARIO: ${text}${ctx}`,
         function friendlyImageError(err: any) {
           const msg = err?.message || String(err || "");
           console.warn("[Papaleta IMG] Error:", msg);
-          if (/timeout/i.test(msg)) return "El generador tardó demasiado. Intenta de nuevo.";
-          if (/403/i.test(msg)) return "El servidor bloqueó la petición (403). Inténtalo de nuevo.";
-          if (/401/i.test(msg)) return "No autorizado (401). Verifica la configuración.";
+          if (/timeout/i.test(msg)) return "El generador tardÃ³ demasiado. Intenta de nuevo.";
+          if (/403/i.test(msg)) return "El servidor bloqueÃ³ la peticiÃ³n (403). IntÃ©ntalo de nuevo.";
+          if (/401/i.test(msg)) return "No autorizado (401). Verifica la configuraciÃ³n.";
           return "No se pudo generar la imagen. Intenta de nuevo.";
         }
 
@@ -793,14 +806,14 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           let lastErr: any;
           for (const { model, timeout } of attempts) {
             const url = buildPollinationsUrl(prompt, width, height, model);
-            console.log(`[Papaleta IMG] Intentando modelo "${model}"…`);
+            console.log(`[Papaleta IMG] Intentando modelo "${model}"â€¦`);
             try {
               const src = await loadImageViaFetch(url, timeout);
-              console.log("[Papaleta IMG] ✅ Imagen generada:", src.slice(0, 60));
+              console.log("[Papaleta IMG] âœ… Imagen generada:", src.slice(0, 60));
               onload(src);
               return;
             } catch (e) {
-              console.warn(`[Papaleta IMG] Modelo "${model}" falló:`, (e as any)?.message);
+              console.warn(`[Papaleta IMG] Modelo "${model}" fallÃ³:`, (e as any)?.message);
               lastErr = e;
             }
           }
@@ -817,14 +830,14 @@ IDEA DEL USUARIO: ${text}${ctx}`,
         }
 
         function showMinimalPlaceholder(w: HTMLElement, _prompt = "", error = "") {
-          w.innerHTML = `<div class="hero-fallback"><div class="hero-fallback-icon">✦</div><p class="hero-fallback-title">Visual en preparación</p><p class="hero-fallback-msg">${escapeHTML(error || "El generador tardó. Puedes reintentar.")}</p><button type="button" class="hero-fallback-btn" onclick="window.__regen()">🔄 Reintentar</button></div>`;
+          w.innerHTML = `<div class="hero-fallback"><div class="hero-fallback-icon">âœ¦</div><p class="hero-fallback-title">Visual en preparaciÃ³n</p><p class="hero-fallback-msg">${escapeHTML(error || "El generador tardÃ³. Puedes reintentar.")}</p><button type="button" class="hero-fallback-btn" onclick="window.__regen()">ðŸ”„ Reintentar</button></div>`;
         }
 
         function genImg(prompt: string) {
           const w = $("hero-wrap");
           if (!w) return;
           const visualPrompt = buildVisualPrompt(prompt);
-          w.innerHTML = '<div class="hero-loading"><span class="spin"></span> Generando imagen…<br><small style="font-size:11px;opacity:0.7;margin-top:8px;display:block;">Puede tardar 20-45 segundos</small></div>';
+          w.innerHTML = '<div class="hero-loading"><span class="spin"></span> Generando imagenâ€¦<br><small style="font-size:11px;opacity:0.7;margin-top:8px;display:block;">Puede tardar 20-45 segundos</small></div>';
           loadGeneratedImage(visualPrompt, (src) => showHeroImg(w, src), (err) => showMinimalPlaceholder(w, visualPrompt, err), 1024, 576);
         }
         window.__regen = () => lastImgPrompt && genImg(lastImgPrompt);
@@ -839,8 +852,8 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           if (clean.length < 12) {
             liveVisualPrompt = "";
             title.textContent = "Empieza a hablar para visualizar la idea";
-            status.textContent = "Con 2 o 3 palabras más genero una imagen.";
-            preview.innerHTML = '<div class="lv-empty">Tu imagen aparecerá aquí mientras dictas la idea.</div>';
+            status.textContent = "Con 2 o 3 palabras mÃ¡s genero una imagen.";
+            preview.innerHTML = '<div class="lv-empty">Tu imagen aparecerÃ¡ aquÃ­ mientras dictas la idea.</div>';
             return;
           }
           title.textContent = clean.split(/[.!?\n]/)[0].slice(0, 72);
@@ -848,10 +861,10 @@ IDEA DEL USUARIO: ${text}${ctx}`,
             const prompt = buildVisualPrompt(clean);
             if (prompt === liveVisualPrompt) return;
             liveVisualPrompt = prompt;
-            preview.innerHTML = '<div class="hero-loading"><span class="spin"></span> Creando vista…</div>';
+            preview.innerHTML = '<div class="hero-loading"><span class="spin"></span> Creando vistaâ€¦</div>';
             loadGeneratedImage(
               prompt,
-              (src) => { preview.innerHTML = `<img src="${src}" alt="Visualización">`;  if (status) status.textContent = "Imagen generada. Sigue dictando para actualizar."; },
+              (src) => { preview.innerHTML = `<img src="${src}" alt="VisualizaciÃ³n">`;  if (status) status.textContent = "Imagen generada. Sigue dictando para actualizar."; },
               () => { preview.innerHTML = '<div class="lv-empty">No pude cargar la imagen ahora.</div>'; },
               640, 360
             );
@@ -934,13 +947,13 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           const tl = $("timeline");
           if (!tl) return;
           if (!entries?.length) {
-            tl.innerHTML = '<div class="tl-empty">Sube fotos de tu proceso 📷</div>';
+            tl.innerHTML = '<div class="tl-empty">Sube fotos de tu proceso ðŸ“·</div>';
             return;
           }
           tl.innerHTML = entries
             .map(
               (e, i) =>
-                `<div class="tl-entry"><img src="${e.data}" alt=""/><div class="tl-date">${e.date}</div>${e.desc ? `<div class="tl-desc">${e.desc}</div>` : ""}<button class="tl-rm" onclick="window.__rmtl(${i})">✕</button></div>`
+                `<div class="tl-entry"><img src="${e.data}" alt=""/><div class="tl-date">${e.date}</div>${e.desc ? `<div class="tl-desc">${e.desc}</div>` : ""}<button class="tl-rm" onclick="window.__rmtl(${i})">âœ•</button></div>`
             )
             .join("");
         }
@@ -953,17 +966,17 @@ IDEA DEL USUARIO: ${text}${ctx}`,
             const r = new FileReader();
             r.onload = async (ev) => {
               const b64 = (ev.target!.result as string).split(",")[1];
-              toast("🔍 Escaneando imagen con IA...", 4000);
+              toast("ðŸ” Escaneando imagen con IA...", 4000);
               let desc = "Avance del proyecto";
               try {
-                const res = await aiCall("Describe esta imagen de avance de proyecto. Di qué acción o elemento físico se observa en máximo 6 palabras, de forma muy directa. Responde SOLO con esa frase corta, sin explicaciones ni comillas.", b64);
+                const res = await aiCall("Describe esta imagen de avance de proyecto. Di quÃ© acciÃ³n o elemento fÃ­sico se observa en mÃ¡ximo 6 palabras, de forma muy directa. Responde SOLO con esa frase corta, sin explicaciones ni comillas.", b64);
                 desc = res.trim().replace(/^["']|["']$/g, "");
               } catch (e) {}
               tl.push({ data: ev.target!.result, date: new Date().toLocaleDateString("es", { day: "numeric", month: "short" }), desc });
               sF("timeline", tl);
               renderTL(tl);
               ideas = JSON.parse(localStorage.getItem("pp_ideas") || "[]");
-              toast("📸 ¡Foto agregada con descripción de IA!");
+              toast("ðŸ“¸ Â¡Foto agregada con descripciÃ³n de IA!");
               refreshIdeaSummary({ silent: true });
             };
             r.readAsDataURL(f);
@@ -1007,7 +1020,7 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
             <div style="font-size:14px;font-weight:600;text-transform:capitalize;">${monthName}, ${currentYear}</div>
             <div style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px;">
-               <div style="width:8px;height:8px;border-radius:4px;background:var(--primary);"></div> Días activos
+               <div style="width:8px;height:8px;border-radius:4px;background:var(--primary);"></div> DÃ­as activos
             </div>
           </div>`;
           
@@ -1071,15 +1084,15 @@ IDEA DEL USUARIO: ${text}${ctx}`,
                 : `<div style="width:40px;height:40px;border-radius:6px;background:var(--primary-l);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;">${initials}</div>`;
               inner += `<div onclick="window.__loadIdea('${a.id}')" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);cursor:pointer;">`;
               inner += thumb;
-              inner += `<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.title || "Idea"}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.tag || "Idea"} · ${a.progress || 0}% completado</div></div>`;
+              inner += `<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.title || "Idea"}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.tag || "Idea"} Â· ${a.progress || 0}% completado</div></div>`;
               inner += `</div>`;
             }
             inner += `</div></div>`;
             container.innerHTML = inner;
           } else if (count > 0) {
-            container.innerHTML = `<div style="font-size:32px;margin-bottom:16px;opacity:0.8;">👻</div><p style="font-size:15px;font-weight:500;color:var(--text);">Registraste ${count} acciones el ${dStr}, pero sin modificaciones en ideas.</p>`;
+            container.innerHTML = `<div style="font-size:32px;margin-bottom:16px;opacity:0.8;">ðŸ‘»</div><p style="font-size:15px;font-weight:500;color:var(--text);">Registraste ${count} acciones el ${dStr}, pero sin modificaciones en ideas.</p>`;
           } else {
-            container.innerHTML = `<div style="font-size:32px;margin-bottom:16px;opacity:0.5;filter:grayscale(1);">💤</div><p style="font-size:15px;font-weight:500;color:var(--text3);">Sin actividad registrada para el ${dStr}.</p>`;
+            container.innerHTML = `<div style="font-size:32px;margin-bottom:16px;opacity:0.5;filter:grayscale(1);">ðŸ’¤</div><p style="font-size:15px;font-weight:500;color:var(--text3);">Sin actividad registrada para el ${dStr}.</p>`;
           }
         };
 
@@ -1109,9 +1122,9 @@ IDEA DEL USUARIO: ${text}${ctx}`,
 
         async function startVoice() {
           const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-          if (!SR) { toast("Tu navegador no trae transcripción gratis. Usa Chrome o Edge."); return; }
+          if (!SR) { toast("Tu navegador no trae transcripciÃ³n gratis. Usa Chrome o Edge."); return; }
           try { await navigator.mediaDevices.getUserMedia({ audio: true }); }
-          catch (e) { toast("Permiso de micrófono denegado"); return; }
+          catch (e) { toast("Permiso de micrÃ³fono denegado"); return; }
           const ta = $("idea-text") as HTMLTextAreaElement;
           recog = new SR();
           recog.lang = navigator.language?.startsWith("es") ? navigator.language : "es-CO";
@@ -1127,11 +1140,11 @@ IDEA DEL USUARIO: ${text}${ctx}`,
             }
             ta.value = (finalText + interim).trimStart();
             const vs = $("voice-status");
-            if (vs) vs.textContent = interim ? "Escuchando borrador…" : "Transcripción guardada, sigue hablando…";
+            if (vs) vs.textContent = interim ? "Escuchando borradorâ€¦" : "TranscripciÃ³n guardada, sigue hablandoâ€¦";
             scheduleLiveVisual(ta.value);
           };
           recog.onerror = (e: any) => {
-            const msg = e.error === "no-speech" ? "No escuché voz clara. Intenta de nuevo." : "Se pausó la transcripción.";
+            const msg = e.error === "no-speech" ? "No escuchÃ© voz clara. Intenta de nuevo." : "Se pausÃ³ la transcripciÃ³n.";
             toast(msg);
             stopVoice();
           };
@@ -1139,12 +1152,12 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           try {
             recog.start();
             const bv = $("btn-voice");
-            if (bv) { bv.textContent = "⏹ Detener"; bv.classList.add("recording"); }
+            if (bv) { bv.textContent = "â¹ Detener"; bv.classList.add("recording"); }
             $("voice-bar")?.classList.remove("hidden");
             const vs = $("voice-status");
-            if (vs) vs.textContent = "Escuchando y transcribiendo…";
-            toast("Habla tu idea: texto e imagen se actualizarán solos");
-          } catch (e) { recog = null; toast("No pude iniciar el micrófono"); }
+            if (vs) vs.textContent = "Escuchando y transcribiendoâ€¦";
+            toast("Habla tu idea: texto e imagen se actualizarÃ¡n solos");
+          } catch (e) { recog = null; toast("No pude iniciar el micrÃ³fono"); }
         }
 
         function stopVoice() {
@@ -1152,7 +1165,7 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           recog = null;
           if (active) { try { active.stop(); } catch (e) {} }
           const bv = $("btn-voice");
-          if (bv) { bv.textContent = "🎤 Voz"; bv.classList.remove("recording"); }
+          if (bv) { bv.textContent = "ðŸŽ¤ Voz"; bv.classList.remove("recording"); }
           $("voice-bar")?.classList.add("hidden");
           scheduleLiveVisual(($("idea-text") as HTMLTextAreaElement)?.value || "");
         }
@@ -1193,15 +1206,15 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           const sel = window.getSelection()?.toString().trim();
           if (!sel) return;
           $("float-menu")?.classList.add("hidden");
-          toast("✨ Procesando…");
+          toast("âœ¨ Procesandoâ€¦");
           try {
             const r = await aiCall(
               `${a === "improve" ? "Mejora" : a === "expand" ? "Expande" : a === "simplify" ? "Simplifica" : "Da alternativas para"}:\n"${sel}"\nDevuelve solo el texto resultante.`
             );
             const md = $("master-doc");
             if (md) { md.innerHTML = md.innerHTML.replace(sel, r.trim()); sF("doc", md.innerHTML); }
-            toast("✅ Listo");
-          } catch (e: any) { toast("❌ " + e.message); }
+            toast("âœ… Listo");
+          } catch (e: any) { toast("âŒ " + e.message); }
         }
 
         // CHAT
@@ -1216,7 +1229,7 @@ IDEA DEL USUARIO: ${text}${ctx}`,
         const resetChat = () => {
           chatHistory = [];
           const msgs = $("chat-msgs");
-          if (msgs) msgs.innerHTML = '<div class="bubble ai">Puedo editar el documento, agregar tareas, buscar en internet, generar imágenes o responder preguntas. 🚀</div>';
+          if (msgs) msgs.innerHTML = '<div class="bubble ai">Puedo editar el documento, agregar tareas, buscar en internet, generar imÃ¡genes o responder preguntas. ðŸš€</div>';
         };
 
         async function sendChat() {
@@ -1233,12 +1246,12 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           const wantsSearch = /\b(busca|investiga|internet|actualidad|noticias|mercado|competencia)\b/i.test(msg);
           let webCtx = "";
           if (wantsSearch) {
-            addBubble("ai", "🔍 Buscando información en internet…");
+            addBubble("ai", "ðŸ” Buscando informaciÃ³n en internetâ€¦");
             webCtx = await webSearch(`${idea?.title || ""} ${msg}`.slice(0, 120));
           }
           const wantsImage = /\b(imagen|visualiza|dibuja|genera.*img|mockup|ilustraci)\b/i.test(msg);
           const wantsAvance =
-            /\b(resumen|avance|bit[aá]cora|analiza|estado del proyecto|pr[oó]ximos pasos)\b/i.test(msg);
+            /\b(resumen|avance|bit[aÃ¡]cora|analiza|estado del proyecto|pr[oÃ³]ximos pasos)\b/i.test(msg);
           if (wantsAvance && idea?.doc) {
             try {
               const source = buildSummarySource(idea) + `\n\nPregunta del usuario: ${msg}`;
@@ -1254,47 +1267,47 @@ IDEA DEL USUARIO: ${text}${ctx}`,
               }
               return;
             } catch (e: any) {
-              addBubble("ai", "❌ " + e.message);
+              addBubble("ai", "âŒ " + e.message);
               return;
             }
           }
           try {
             const raw = await aiCall(
-              `Asistente Papaleta. Idea:"${idea?.title}". Progreso:${idea?.progress || 0}%.\nDoc:"${docTxt}"\nKanban:${kb}\n${webCtx ? "Web:\\n" + webCtx + "\\n" : ""}Historial:\\n${hist}\nUsuario:"${msg}"\nResponde SOLO JSON con UNA acción. IMPORTANTE: Cuando uses "rewrite", el campo "doc" DEBE ser HTML puro (<h3>, <p>, <ul>), nunca uses Markdown.\n{"action":"rewrite","doc":"<h3>...</h3><p>HTML</p>","response":"qué cambié"}\n{"action":"add_task","task":"texto","column":"todo|doing|done","response":"qué agregué"}\n{"action":"add_multiple_tasks","tasks":["t1","t2"],"response":"qué agregué"}\n{"action":"move_task","task":"nombre","to":"todo|doing|done","response":"qué moví"}\n{"action":"complete_task","task":"nombre","response":"qué completé"}\n{"action":"set_progress","value":50,"response":"razón"}\n{"action":"generate_image","prompt":"English visual prompt","response":"generando imagen"}\n{"action":"web_search","query":"términos","response":"buscaré"}\n{"action":"chat","response":"respuesta"}\nEspañol. Estrictamente JSON.`
+              `Asistente Papaleta. Idea:"${idea?.title}". Progreso:${idea?.progress || 0}%.\nDoc:"${docTxt}"\nKanban:${kb}\n${webCtx ? "Web:\\n" + webCtx + "\\n" : ""}Historial:\\n${hist}\nUsuario:"${msg}"\nResponde SOLO JSON con UNA acciÃ³n. IMPORTANTE: Cuando uses "rewrite", el campo "doc" DEBE ser HTML puro (<h3>, <p>, <ul>), nunca uses Markdown.\n{"action":"rewrite","doc":"<h3>...</h3><p>HTML</p>","response":"quÃ© cambiÃ©"}\n{"action":"add_task","task":"texto","column":"todo|doing|done","response":"quÃ© agreguÃ©"}\n{"action":"add_multiple_tasks","tasks":["t1","t2"],"response":"quÃ© agreguÃ©"}\n{"action":"move_task","task":"nombre","to":"todo|doing|done","response":"quÃ© movÃ­"}\n{"action":"complete_task","task":"nombre","response":"quÃ© completÃ©"}\n{"action":"set_progress","value":50,"response":"razÃ³n"}\n{"action":"generate_image","prompt":"English visual prompt","response":"generando imagen"}\n{"action":"web_search","query":"tÃ©rminos","response":"buscarÃ©"}\n{"action":"chat","response":"respuesta"}\nEspaÃ±ol. Estrictamente JSON.`
             );
             let p: any;
             try { p = JSON.parse(raw.replace(/```json|```/g, "").trim().match(/\{[\s\S]*\}/)![0]); }
             catch { p = { action: "chat", response: raw }; }
-            addBubble("ai", p.response || "✅");
+            addBubble("ai", p.response || "âœ…");
             chatHistory.push({ role: "assistant", content: p.response || "" });
             if (p.action === "web_search" && p.query) {
               const extra = await webSearch(p.query);
-              if (extra) addBubble("ai", "📎 Resultados:\n" + extra.slice(0, 1200));
+              if (extra) addBubble("ai", "ðŸ“Ž Resultados:\n" + extra.slice(0, 1200));
             }
             if ((p.action === "generate_image" && p.prompt) || (wantsImage && !p.action)) {
               const prompt = p.prompt || buildVisualPrompt(msg);
               lastImgPrompt = prompt;
               sF("imgPrompt", prompt);
               genImg(prompt);
-              toast("🎨 Generando imagen…");
+              toast("ðŸŽ¨ Generando imagenâ€¦");
             }
-            if (p.action === "rewrite" && p.doc) { const md = $("master-doc"); if (md) { md.innerHTML = p.doc; sF("doc", p.doc); toast("📝 Documento actualizado"); } }
-            if (p.action === "add_task" && p.task) { const col = p.column || "todo"; makeCard(p.task, `k-${col}`); saveKanban(); calcPct(); toast(`✅ Tarea agregada`); }
-            if (p.action === "add_multiple_tasks" && p.tasks && Array.isArray(p.tasks)) { p.tasks.forEach((t: string) => makeCard(t, "k-todo")); saveKanban(); calcPct(); toast(`✅ ${p.tasks.length} tareas agregadas`); }
+            if (p.action === "rewrite" && p.doc) { const md = $("master-doc"); if (md) { md.innerHTML = p.doc; sF("doc", p.doc); toast("ðŸ“ Documento actualizado"); } }
+            if (p.action === "add_task" && p.task) { const col = p.column || "todo"; makeCard(p.task, `k-${col}`); saveKanban(); calcPct(); toast(`âœ… Tarea agregada`); }
+            if (p.action === "add_multiple_tasks" && p.tasks && Array.isArray(p.tasks)) { p.tasks.forEach((t: string) => makeCard(t, "k-todo")); saveKanban(); calcPct(); toast(`âœ… ${p.tasks.length} tareas agregadas`); }
             if (p.action === "move_task" && p.task && p.to) {
               const cards = [...(document.querySelectorAll(".k-card") || [])];
               const m = cards.find((c) => c.textContent?.toLowerCase().includes(p.task.toLowerCase()));
-              if (m) { $(`k-${p.to}`)?.appendChild(m); saveKanban(); calcPct(); toast(`✅ Tarea movida`); }
+              if (m) { $(`k-${p.to}`)?.appendChild(m); saveKanban(); calcPct(); toast(`âœ… Tarea movida`); }
             }
             if (p.action === "complete_task" && p.task) {
               const cards = [...(document.querySelectorAll("#k-todo .k-card, #k-doing .k-card") || [])];
               const m = cards.find((c) => c.textContent?.toLowerCase().includes(p.task.toLowerCase()));
-              if (m) { $("k-done")?.appendChild(m); saveKanban(); calcPct(); toast("✅ Tarea completada"); }
+              if (m) { $("k-done")?.appendChild(m); saveKanban(); calcPct(); toast("âœ… Tarea completada"); }
             }
-            if (p.action === "set_progress" && typeof p.value === "number") { setPct(p.value); sF("progress", p.value); toast(`📊 Progreso: ${p.value}%`); }
+            if (p.action === "set_progress" && typeof p.value === "number") { setPct(p.value); sF("progress", p.value); toast(`ðŸ“Š Progreso: ${p.value}%`); }
             ideas = JSON.parse(localStorage.getItem("pp_ideas") || "[]");
             renderNav();
-          } catch (e: any) { addBubble("ai", "❌ " + e.message); }
+          } catch (e: any) { addBubble("ai", "âŒ " + e.message); }
         }
 
         async function chatImg(f: File) {
@@ -1302,26 +1315,26 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           const r = new FileReader();
           r.onload = async (e) => {
             const b = (e.target!.result as string).split(",")[1];
-            try { addBubble("ai", "🖼️ " + (await aiCall("Describe esta imagen brevemente. Español.", b))); }
-            catch (e: any) { addBubble("ai", "❌ " + e.message); }
+            try { addBubble("ai", "ðŸ–¼ï¸ " + (await aiCall("Describe esta imagen brevemente. EspaÃ±ol.", b))); }
+            catch (e: any) { addBubble("ai", "âŒ " + e.message); }
           };
           r.readAsDataURL(f);
         }
 
         async function startLocalSession() {
-          console.log("🔧 Iniciando sesión local...");
+          console.log("ðŸ”§ Iniciando sesiÃ³n local...");
           user = { uid: "local", displayName: "Creador Local", photoURL: "" };
-          console.log("👤 Usuario creado:", user);
+          console.log("ðŸ‘¤ Usuario creado:", user);
           $("login")?.classList.add("hidden");
           $("app")?.classList.remove("hidden");
-          console.log("🎨 UI actualizada");
+          console.log("ðŸŽ¨ UI actualizada");
           updateUserProfile(user);
           await loadIdeas();
           renderNav();
           showDashboard();
           wire();
           toast("Modo local gratis activado");
-          console.log("✅ Sesión local iniciada correctamente");
+          console.log("âœ… SesiÃ³n local iniciada correctamente");
         }
 
         function wire() {
@@ -1415,7 +1428,7 @@ IDEA DEL USUARIO: ${text}${ctx}`,
             await sF("aiSummary", v);
             ideas = JSON.parse(localStorage.getItem("pp_ideas") || "[]");
             renderAiSummary(ideas.find((i) => i.id === ideaId));
-            toast("✅ Resumen guardado");
+            toast("âœ… Resumen guardado");
           };
           if (btnRegenSummary) btnRegenSummary.onclick = () => refreshIdeaSummary();
         }
@@ -1451,34 +1464,34 @@ IDEA DEL USUARIO: ${text}${ctx}`,
           const btnLogin = $("btn-login");
           const btnLocal = $("btn-local");
           
-          console.log("🔍 Buscando botones...");
+          console.log("ðŸ” Buscando botones...");
           console.log("btnLogin:", btnLogin);
           console.log("btnLocal:", btnLocal);
           
           if (btnLogin) {
-            console.log("✅ Botón Google encontrado");
+            console.log("âœ… BotÃ³n Google encontrado");
             btnLogin.onclick = (e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log("🚀 Click en botón Google");
+              console.log("ðŸš€ Click en botÃ³n Google");
               signInWithPopup(auth, provider).catch((e) => toast("Error: " + e.message));
             };
           } else {
-            console.log("❌ Botón Google NO encontrado");
+            console.log("âŒ BotÃ³n Google NO encontrado");
           }
           
           if (btnLocal) {
-            console.log("✅ Botón Local encontrado");
+            console.log("âœ… BotÃ³n Local encontrado");
             btnLocal.onclick = async (e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log("🚀 Click en botón local");
+              console.log("ðŸš€ Click en botÃ³n local");
               localMode = true;
               localStorage.setItem("pp_local_mode", "1");
               await startLocalSession();
             };
           } else {
-            console.log("❌ Botón Local NO encontrado");
+            console.log("âŒ BotÃ³n Local NO encontrado");
           }
         };
 
@@ -1490,14 +1503,14 @@ IDEA DEL USUARIO: ${text}${ctx}`,
 
         // Expose functions globally for direct button access
         (window as any).__startLocalSession = async () => {
-          console.log("🌍 Global startLocalSession llamado");
+          console.log("ðŸŒ Global startLocalSession llamado");
           localMode = true;
           localStorage.setItem("pp_local_mode", "1");
           await startLocalSession();
         };
 
         (window as any).__startGoogleLogin = () => {
-          console.log("🌍 Global startGoogleLogin llamado");
+          console.log("ðŸŒ Global startGoogleLogin llamado");
           signInWithPopup(auth, provider).catch((e) => toast("Error: " + e.message));
         };
 
@@ -1565,10 +1578,10 @@ IDEA DEL USUARIO: ${text}${ctx}`,
             <h1 className="lc-title">Papaleta</h1>
             <p className="lc-sub">Tu laboratorio de ideas con IA</p>
             <div className="lc-features">
-              <div className="lcf">🔍 Analiza con preguntas inteligentes</div>
-              <div className="lcf">✨ Potencia y estructura con IA</div>
-              <div className="lcf">🗂️ Kanban interactivo</div>
-              <div className="lcf">📸 Bitácora visual de avances</div>
+              <div className="lcf">ðŸ” Analiza con preguntas inteligentes</div>
+              <div className="lcf">âœ¨ Potencia y estructura con IA</div>
+              <div className="lcf">ðŸ—‚ï¸ Kanban interactivo</div>
+              <div className="lcf">ðŸ“¸ BitÃ¡cora visual de avances</div>
             </div>
           </div>
           <div className="login-card glass login-panel-auth">
@@ -1580,17 +1593,17 @@ IDEA DEL USUARIO: ${text}${ctx}`,
               style={{ fontSize: '16px', padding: '16px' }}
               onClick={(e) => {
                 e.preventDefault();
-                console.log("⚡ React onClick - botón local");
+                console.log("âš¡ React onClick - botÃ³n local");
                 if ((window as any).__startLocalSession) {
                   (window as any).__startLocalSession();
                 } else {
-                  console.error("❌ __startLocalSession no está disponible");
+                  console.error("âŒ __startLocalSession no estÃ¡ disponible");
                 }
               }}
             >
-              🚀 Entrar gratis sin cuenta
+              ðŸš€ Entrar gratis sin cuenta
             </button>
-            <p className="lc-note" style={{ marginTop: '12px', marginBottom: '16px' }}>Gratis · Sin registro · Datos privados</p>
+            <p className="lc-note" style={{ marginTop: '12px', marginBottom: '16px' }}>Gratis Â· Sin registro Â· Datos privados</p>
             <div style={{ margin: "16px 0", textAlign: "center", color: "rgba(245,245,247,0.3)", fontSize: "11px", display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ flex: 1, height: '1px', background: 'rgba(245,245,247,0.1)' }}></div>
               <span>o si prefieres</span>
@@ -1602,11 +1615,11 @@ IDEA DEL USUARIO: ${text}${ctx}`,
               style={{ opacity: 0.7 }}
               onClick={(e) => {
                 e.preventDefault();
-                console.log("⚡ React onClick - botón Google");
+                console.log("âš¡ React onClick - botÃ³n Google");
                 if ((window as any).__startGoogleLogin) {
                   (window as any).__startGoogleLogin();
                 } else {
-                  console.error("❌ __startGoogleLogin no está disponible");
+                  console.error("âŒ __startGoogleLogin no estÃ¡ disponible");
                 }
               }}
             >
@@ -1629,7 +1642,7 @@ IDEA DEL USUARIO: ${text}${ctx}`,
       <div id="app" className="app hidden">
         {/* MOBILE TOPBAR */}
         <div className="mobile-topbar">
-          <button id="btn-hamburger" className="icon-btn">☰</button>
+          <button id="btn-hamburger" className="icon-btn">â˜°</button>
           <span className="mt-logo">
             <img src="/papaletaLogok.png" alt="Papaleta" className="mt-logo-img" /> Papaleta
           </span>
@@ -1644,11 +1657,11 @@ IDEA DEL USUARIO: ${text}${ctx}`,
               <img src="/papaletaarriba.png" alt="Papaleta" className="sb-logo-img" />
               <span className="sb-logo-text">Papaleta</span>
             </a>
-            <button id="btn-collapse" className="icon-btn" title="Colapsar">‹</button>
+            <button id="btn-collapse" className="icon-btn" title="Colapsar">â€¹</button>
           </div>
           <button id="btn-new" className="btn-new"><span>+</span> Nueva Idea</button>
           <div className="sb-section-label">MIS IDEAS</div>
-          <div id="ideas-nav" className="ideas-nav"><div className="empty-nav">Crea tu primera idea ✨</div></div>
+          <div id="ideas-nav" className="ideas-nav"><div className="empty-nav">Crea tu primera idea âœ¨</div></div>
           <div className="sb-footer">
             <button id="btn-dark-mode" className="btn-dark-mode" title="Cambiar tema">
               <svg className="theme-toggle-svg" width="20" height="20" viewBox="0 0 25 25" fill="none">
@@ -1666,9 +1679,9 @@ IDEA DEL USUARIO: ${text}${ctx}`,
                 <path className="moon-icon" d="M21.1918 13.2013C21.0345 14.9035 20.3957 16.5257 19.35 17.8781C18.3044 19.2305 16.8953 20.2571 15.2875 20.8379C13.6797 21.4186 11.9398 21.5294 10.2713 21.1574C8.60281 20.7854 7.07479 19.9459 5.86602 18.7371C4.65725 17.5283 3.81774 16.0003 3.4457 14.3318C3.07367 12.6633 3.18451 10.9234 3.76526 9.31561C4.346 7.70783 5.37263 6.29868 6.72501 5.25307C8.07739 4.20746 9.69959 3.56862 11.4018 3.41132C10.4052 4.75958 9.92564 6.42077 10.0503 8.09273C10.175 9.76469 10.8957 11.3364 12.0812 12.5219C13.2667 13.7075 14.8384 14.4281 16.5104 14.5528C18.1823 14.6775 19.8435 14.1979 21.1918 13.2013Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-            <img id="uavatar" className="u-avatar" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" />
-            <span id="uname" className="u-name">—</span>
-            <button id="btn-logout" className="chip-btn" title="Cerrar sesión" style={{ padding: '6px 12px', fontSize: '12px', marginLeft: 'auto' }}>Salir</button>
+            <div id="uavatar" className="u-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}></div>
+            <span id="uname" className="u-name">â€”</span>
+            <button id="btn-logout" className="chip-btn" title="Cerrar sesiÃ³n" style={{ padding: '6px 12px', fontSize: '12px', marginLeft: 'auto' }}>Salir</button>
           </div>
         </aside>
 
@@ -1681,20 +1694,20 @@ IDEA DEL USUARIO: ${text}${ctx}`,
                 <div className="profile-initials">U</div>
               </div>
               <div>
-                <h1 id="user-greeting" className="user-greeting">Hola Usuario, ¿qué ideas tienes hoy?</h1>
+                <h1 id="user-greeting" className="user-greeting">Hola Usuario, Â¿quÃ© ideas tienes hoy?</h1>
                 <p style={{ fontSize: 15, color: "var(--text2)", marginTop: 4 }}>Tu Laboratorio de Ideas</p>
               </div>
             </div>
             <div className="dash-stats-grid">
-              <div className="stat-card"><div className="stat-icon">💡</div><div className="stat-value" id="stat-total">0</div><div className="stat-label">Ideas Creadas</div></div>
-              <div className="stat-card"><div className="stat-icon">⚡</div><div className="stat-value" id="stat-progress">0</div><div className="stat-label">En Progreso</div></div>
-              <div className="stat-card"><div className="stat-icon">✅</div><div className="stat-value" id="stat-completed">0</div><div className="stat-label">Completadas</div></div>
-              <div className="stat-card"><div className="stat-icon">🔥</div><div className="stat-value" id="stat-streak">0</div><div className="stat-label">Días Seguidos</div></div>
+              <div className="stat-card"><div className="stat-icon">ðŸ’¡</div><div className="stat-value" id="stat-total">0</div><div className="stat-label">Ideas Creadas</div></div>
+              <div className="stat-card"><div className="stat-icon">âš¡</div><div className="stat-value" id="stat-progress">0</div><div className="stat-label">En Progreso</div></div>
+              <div className="stat-card"><div className="stat-icon">âœ…</div><div className="stat-value" id="stat-completed">0</div><div className="stat-label">Completadas</div></div>
+              <div className="stat-card"><div className="stat-icon">ðŸ”¥</div><div className="stat-value" id="stat-streak">0</div><div className="stat-label">DÃ­as Seguidos</div></div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '32px' }}>
               <div className="dash-heatmap-card" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
                 <div className="dhc-header" style={{ marginBottom: '0' }}>
-                  <div className="dhc-title"><span className="dhc-icon">📅</span><span>Tu Actividad</span></div>
+                  <div className="dhc-title"><span className="dhc-icon">ðŸ“…</span><span>Tu Actividad</span></div>
                 </div>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 0' }}>
                   <div id="heatmap" className="dhc-heatmap-new" style={{ width: '100%' }}></div>
@@ -1703,29 +1716,29 @@ IDEA DEL USUARIO: ${text}${ctx}`,
               
               <div className="dash-heatmap-card" style={{ margin: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <div className="dhc-header" style={{ marginBottom: '0', borderBottom: '1px solid var(--border)', paddingBottom: '16px' }}>
-                  <div className="dhc-title"><span className="dhc-icon">⚡</span><span>Detalle del Día</span></div>
+                  <div className="dhc-title"><span className="dhc-icon">âš¡</span><span>Detalle del DÃ­a</span></div>
                 </div>
                 <div id="day-activity-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 20px', color: 'var(--text3)', textAlign: 'center' }}>
-                  <div style={{ fontSize: '42px', marginBottom: '16px', opacity: 0.5, filter: 'grayscale(1)' }}>👆</div>
-                  <p style={{ fontSize: '15px', lineHeight: 1.5, fontWeight: 500 }}>Selecciona un día en el calendario<br/>para ver en qué ideas trabajaste.</p>
+                  <div style={{ fontSize: '42px', marginBottom: '16px', opacity: 0.5, filter: 'grayscale(1)' }}>ðŸ‘†</div>
+                  <p style={{ fontSize: '15px', lineHeight: 1.5, fontWeight: 500 }}>Selecciona un dÃ­a en el calendario<br/>para ver en quÃ© ideas trabajaste.</p>
                 </div>
               </div>
             </div>
             <div className="dash-ideas-section">
               <div className="dis-header">
-                <h2 className="dis-title">💡 Ideas Potenciadas</h2>
+                <h2 className="dis-title">ðŸ’¡ Ideas Potenciadas</h2>
                 <span id="dis-count" className="dis-count">0 ideas</span>
               </div>
               <div id="ideas-grid" className="ideas-grid">
                 <div className="ideas-empty">
-                  <div className="ie-icon">✨</div>
-                  <p className="ie-text">Aún no has creado ninguna idea.<br />¡Empieza ahora y potencia tus proyectos con IA!</p>
+                  <div className="ie-icon">âœ¨</div>
+                  <p className="ie-text">AÃºn no has creado ninguna idea.<br />Â¡Empieza ahora y potencia tus proyectos con IA!</p>
                   <button className="btn-primary" onClick={() => document.getElementById("btn-new")?.click()}><span>+</span> Crear Primera Idea</button>
                 </div>
               </div>
             </div>
             <div className="dash-cta">
-              <button className="btn-primary btn-large" onClick={() => document.getElementById("btn-new")?.click()}><span>✨</span> Crear Nueva Idea</button>
+              <button className="btn-primary btn-large" onClick={() => document.getElementById("btn-new")?.click()}><span>âœ¨</span> Crear Nueva Idea</button>
             </div>
           </div>
 
@@ -1757,40 +1770,40 @@ IDEA DEL USUARIO: ${text}${ctx}`,
             {/* INPUT */}
             <div id="input-zone" className="input-zone">
               <div className="iz-header">
-                <span className="iz-label">💡 Describe tu idea</span>
+                <span className="iz-label">ðŸ’¡ Describe tu idea</span>
                 <div className="iz-actions">
-                  <button id="btn-voice" className="chip-btn">🎤 Voz</button>
-                  <label htmlFor="file-img" className="chip-btn">🖼️ Imagen</label>
+                  <button id="btn-voice" className="chip-btn">ðŸŽ¤ Voz</button>
+                  <label htmlFor="file-img" className="chip-btn">ðŸ–¼ï¸ Imagen</label>
                   <input type="file" id="file-img" accept="image/*" className="hidden" />
                 </div>
               </div>
               <textarea id="idea-text" className="iz-textarea" placeholder="Habla o escribe tu idea. Papaleta la transcribe y crea una imagen gratis con IA."></textarea>
               <div id="live-visual" className="live-visual">
                 <div className="lv-preview" id="live-visual-preview">
-                  <div className="lv-empty">Tu imagen aparecerá aquí mientras dictas la idea.</div>
+                  <div className="lv-empty">Tu imagen aparecerÃ¡ aquÃ­ mientras dictas la idea.</div>
                 </div>
                 <div className="lv-copy">
-                  <div className="lv-kicker">Voz → texto → imagen</div>
+                  <div className="lv-kicker">Voz â†’ texto â†’ imagen</div>
                   <div id="live-visual-title" className="lv-title">Empieza a hablar para visualizar la idea</div>
                   <div id="live-visual-status" className="lv-status">En local pega tu key para generar. Sin key uso un respaldo viejo que puede fallar.</div>
                 </div>
               </div>
               <details className="api-settings">
-                <summary>Configurar generación de imágenes</summary>
+                <summary>Configurar generaciÃ³n de imÃ¡genes</summary>
                 <div className="api-row">
                   <input id="pollinations-key" className="api-input" type="password" placeholder="Pollinations API key: sk_... o pk_..." />
                   <button id="btn-save-img-api" className="chip-btn" type="button">Guardar key</button>
                 </div>
-                <p className="api-help">Modo local: puedes pegar tu <strong>sk_</strong> para probar. No publiques la app así; en producción esa key va en backend o variable de entorno.</p>
+                <p className="api-help">Modo local: puedes pegar tu <strong>sk_</strong> para probar. No publiques la app asÃ­; en producciÃ³n esa key va en backend o variable de entorno.</p>
               </details>
               <div id="img-preview-wrap" className="img-preview-wrap hidden">
-                <img id="img-preview" className="img-preview-thumb" alt="" /><button id="btn-rm-img" className="img-rm">✕</button>
+                <img id="img-preview" className="img-preview-thumb" alt="" /><button id="btn-rm-img" className="img-rm">âœ•</button>
               </div>
               <div id="voice-bar" className="voice-bar hidden">
-                <span className="vdot"></span><span id="voice-status">Escuchando y transcribiendo…</span><button id="btn-stop-voice" className="chip-btn-sm">■ Detener</button>
+                <span className="vdot"></span><span id="voice-status">Escuchando y transcribiendoâ€¦</span><button id="btn-stop-voice" className="chip-btn-sm">â–  Detener</button>
               </div>
               <div className="iz-footer">
-                <button id="btn-analyze" className="btn-primary"><span id="analyze-lbl">🔍 Analizar con IA</span><span id="analyze-spin" className="spin hidden"></span></button>
+                <button id="btn-analyze" className="btn-primary"><span id="analyze-lbl">ðŸ” Analizar con IA</span><span id="analyze-spin" className="spin hidden"></span></button>
               </div>
             </div>
 
@@ -1801,61 +1814,61 @@ IDEA DEL USUARIO: ${text}${ctx}`,
             <div id="results" className="results hidden">
               <div id="ai-summary-section" className="ai-summary-section glass-panel hidden">
                 <div className="ai-summary-header">
-                  <span className="block-label">💡 Resumen de IA</span>
+                  <span className="block-label">ðŸ’¡ Resumen de IA</span>
                   <div className="ai-summary-actions">
-                    <button type="button" id="btn-regen-summary" className="chip-btn">↻ Regenerar</button>
-                    <button type="button" id="btn-edit-summary" className="chip-btn">✏️ Editar</button>
+                    <button type="button" id="btn-regen-summary" className="chip-btn">â†» Regenerar</button>
+                    <button type="button" id="btn-edit-summary" className="chip-btn">âœï¸ Editar</button>
                   </div>
                 </div>
                 <div id="ai-summary-view" className="ai-summary-view"></div>
-                <textarea id="ai-summary-edit" className="ai-summary-edit hidden" rows={4} placeholder="Edita el resumen generado por IA…" />
+                <textarea id="ai-summary-edit" className="ai-summary-edit hidden" rows={4} placeholder="Edita el resumen generado por IAâ€¦" />
                 <button type="button" id="btn-save-summary" className="btn-primary ai-summary-save hidden">Guardar resumen</button>
               </div>
               <div className="hero-section">
-                <div className="hero-header"><span className="block-label">🎨 Visualización del Concepto</span><button id="btn-regen-img" className="chip-btn">🔄 Regenerar</button></div>
-                <div id="hero-wrap" className="hero-wrap"><div className="hero-loading"><span className="spin"></span> Generando imagen…</div></div>
+                <div className="hero-header"><span className="block-label">ðŸŽ¨ VisualizaciÃ³n del Concepto</span><button id="btn-regen-img" className="chip-btn">ðŸ”„ Regenerar</button></div>
+                <div id="hero-wrap" className="hero-wrap"><div className="hero-loading"><span className="spin"></span> Generando imagenâ€¦</div></div>
               </div>
               <div className="doc-section">
-                <div className="doc-header"><span className="block-label">📄 Documento Maestro</span><span className="doc-hint">✏️ Edita libremente · Selecciona texto → menú IA</span></div>
+                <div className="doc-header"><span className="block-label">ðŸ“„ Documento Maestro</span><span className="doc-hint">âœï¸ Edita libremente Â· Selecciona texto â†’ menÃº IA</span></div>
                 <div className="doc-toolbar">
                   <button className="tb-btn" data-cmd="bold"><b>B</b></button>
                   <button className="tb-btn" data-cmd="italic"><i>I</i></button>
                   <button className="tb-btn" data-cmd="underline"><u>U</u></button>
                   <span className="tb-sep"></span>
-                  <button className="tb-btn" data-cmd="insertUnorderedList">≡</button>
+                  <button className="tb-btn" data-cmd="insertUnorderedList">â‰¡</button>
                   <button className="tb-btn" data-cmd="formatBlock" data-val="h3">H</button>
                 </div>
                 <div id="master-doc" className="master-doc" contentEditable suppressContentEditableWarning></div>
                 <div id="float-menu" className="float-menu hidden">
-                  <button className="fm-btn" data-action="improve">✨ Mejorar</button>
-                  <button className="fm-btn" data-action="expand">📖 Expandir</button>
-                  <button className="fm-btn" data-action="simplify">✂️ Simplificar</button>
-                  <button className="fm-btn" data-action="alternatives">💡 Alternativas</button>
+                  <button className="fm-btn" data-action="improve">âœ¨ Mejorar</button>
+                  <button className="fm-btn" data-action="expand">ðŸ“– Expandir</button>
+                  <button className="fm-btn" data-action="simplify">âœ‚ï¸ Simplificar</button>
+                  <button className="fm-btn" data-action="alternatives">ðŸ’¡ Alternativas</button>
                 </div>
               </div>
               <div className="timeline-section">
                 <div className="tl-header">
-                  <span className="block-label">📸 Bitácora de Avances</span>
-                  <label htmlFor="file-timeline" className="chip-btn">📷 Subir foto</label>
+                  <span className="block-label">ðŸ“¸ BitÃ¡cora de Avances</span>
+                  <label htmlFor="file-timeline" className="chip-btn">ðŸ“· Subir foto</label>
                   <input type="file" id="file-timeline" accept="image/*" multiple className="hidden" />
                 </div>
                 <div id="timeline" className="timeline">
-                  <div className="tl-empty">Sube fotos de tu proceso para documentar el avance 📷</div>
+                  <div className="tl-empty">Sube fotos de tu proceso para documentar el avance ðŸ“·</div>
                 </div>
               </div>
               <div className="kanban-section">
-                <div className="block-label" style={{ marginBottom: 14 }}>🗂️ Plan de Acción</div>
+                <div className="block-label" style={{ marginBottom: 14 }}>ðŸ—‚ï¸ Plan de AcciÃ³n</div>
                 <div className="kanban-board" id="kanban-board">
                   <div className="k-col" data-col="todo">
-                    <div className="k-col-head todo-head">📋 Por Hacer<button className="k-add-btn" onClick={() => window.addKanbanCard("todo")}>+</button></div>
+                    <div className="k-col-head todo-head">ðŸ“‹ Por Hacer<button className="k-add-btn" onClick={() => window.addKanbanCard("todo")}>+</button></div>
                     <div className="k-col-body" id="k-todo"></div>
                   </div>
                   <div className="k-col" data-col="doing">
-                    <div className="k-col-head doing-head">⚡ En Progreso<button className="k-add-btn" onClick={() => window.addKanbanCard("doing")}>+</button></div>
+                    <div className="k-col-head doing-head">âš¡ En Progreso<button className="k-add-btn" onClick={() => window.addKanbanCard("doing")}>+</button></div>
                     <div className="k-col-body" id="k-doing"></div>
                   </div>
                   <div className="k-col" data-col="done">
-                    <div className="k-col-head done-head">✅ Completado<button className="k-add-btn" onClick={() => window.addKanbanCard("done")}>+</button></div>
+                    <div className="k-col-head done-head">âœ… Completado<button className="k-add-btn" onClick={() => window.addKanbanCard("done")}>+</button></div>
                     <div className="k-col-body" id="k-done"></div>
                   </div>
                 </div>
@@ -1867,26 +1880,26 @@ IDEA DEL USUARIO: ${text}${ctx}`,
         {/* REGEN IMAGE MODAL */}
         <div id="regen-modal" className="regen-modal-backdrop hidden">
           <div className="regen-modal-card">
-            <h3 className="regen-modal-title">🎨 Regenerar imagen</h3>
-            <p className="regen-modal-sub">Describe mejor lo que quieres visualizar. Sé específico para mejores resultados.</p>
-            <textarea id="regen-prompt-input" className="regen-modal-input" rows={4} placeholder="Ej: A modern mobile app interface showing a coffee shop, warm lighting, flat design, no text…"></textarea>
+            <h3 className="regen-modal-title">ðŸŽ¨ Regenerar imagen</h3>
+            <p className="regen-modal-sub">Describe mejor lo que quieres visualizar. SÃ© especÃ­fico para mejores resultados.</p>
+            <textarea id="regen-prompt-input" className="regen-modal-input" rows={4} placeholder="Ej: A modern mobile app interface showing a coffee shop, warm lighting, flat design, no textâ€¦"></textarea>
             <div className="regen-modal-actions">
               <button id="btn-regen-cancel" className="regen-btn-cancel">Cancelar</button>
-              <button id="btn-regen-confirm" className="regen-btn-confirm">🎨 Generar imagen</button>
+              <button id="btn-regen-confirm" className="regen-btn-confirm">ðŸŽ¨ Generar imagen</button>
             </div>
           </div>
         </div>
 
         {/* CHAT */}
-        <button id="chat-fab" className="chat-fab">💬</button>
+        <button id="chat-fab" className="chat-fab">ðŸ’¬</button>
         <div id="chat-panel" className="chat-panel hidden">
-          <div className="cp-header"><span>💬 Asistente IA</span><button id="btn-close-chat" className="icon-btn cp-close">✕</button></div>
-          <div id="chat-msgs" className="chat-msgs"><div className="bubble ai">¡Hola! Puedo editar tu documento, agregar tareas al plan, actualizar tu progreso o responder preguntas. 🚀</div></div>
+          <div className="cp-header"><span>ðŸ’¬ Asistente IA</span><button id="btn-close-chat" className="icon-btn cp-close">âœ•</button></div>
+          <div id="chat-msgs" className="chat-msgs"><div className="bubble ai">Â¡Hola! Puedo editar tu documento, agregar tareas al plan, actualizar tu progreso o responder preguntas. ðŸš€</div></div>
           <div className="cp-footer">
-            <label htmlFor="chat-file" className="icon-btn cp-attach">📎</label>
+            <label htmlFor="chat-file" className="icon-btn cp-attach">ðŸ“Ž</label>
             <input type="file" id="chat-file" accept="image/*" className="hidden" />
-            <textarea id="chat-input" className="cp-input" rows={1} placeholder="Escribe aquí…"></textarea>
-            <button id="btn-send" className="btn-send">↑</button>
+            <textarea id="chat-input" className="cp-input" rows={1} placeholder="Escribe aquÃ­â€¦"></textarea>
+            <button id="btn-send" className="btn-send">â†‘</button>
           </div>
         </div>
       </div>
