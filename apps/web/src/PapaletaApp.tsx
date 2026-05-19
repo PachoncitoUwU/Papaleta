@@ -1446,7 +1446,7 @@ export default function PapaletaApp() {
         <aside id="sidebar" className="sidebar">
           <div className="sb-header">
             <a href="#" onClick={(e) => { e.preventDefault(); window.showDashboard?.(); }} className="sb-logo-link" style={{ color: 'white', textDecoration: 'none' }}>
-              <img src="/papaletaarriba.png" alt="Papaleta" className="sb-logo-img" />
+              <img src="/papaletaLogok.png" alt="Papaleta" className="sb-logo-img" />
               <span className="sb-logo-text">Papaleta</span>
             </a>
             <button id="btn-collapse" className="icon-btn" title="Colapsar">‹</button>
