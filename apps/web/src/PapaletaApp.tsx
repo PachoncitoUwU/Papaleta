@@ -68,7 +68,7 @@ export default function PapaletaApp() {
         const auth = getAuth(fbApp);
         const db = getFirestore(fbApp);
         const provider = new GoogleAuthProvider();
-        await setPersistence(auth, browserLocalPersistence).catch(() => {});
+        await setPersistence(auth, browserLocalPersistence).catch(() => { });
 
         async function loadUserSettings(uid: string) {
           try {
@@ -77,12 +77,12 @@ export default function PapaletaApp() {
               const data = snap.data();
               if (data.groqKey) localStorage.setItem("pp_groq_key", data.groqKey);
             }
-          } catch (e) {}
+          } catch (e) { }
         }
 
         async function saveUserSettings(uid: string, settings: Record<string, any>) {
           try { await setDoc(doc(db, "users", uid), settings, { merge: true }); }
-          catch (e) {}
+          catch (e) { }
         }
 
         const $ = (id: string) => document.getElementById(id);
@@ -126,12 +126,12 @@ export default function PapaletaApp() {
             : "llama-3.3-70b-versatile";
           const content: any = img
             ? [
-                {
-                  type: "image_url",
-                  image_url: { url: `data:image/jpeg;base64,${img}` },
-                },
-                { type: "text", text: prompt },
-              ]
+              {
+                type: "image_url",
+                image_url: { url: `data:image/jpeg;base64,${img}` },
+              },
+              { type: "text", text: prompt },
+            ]
             : prompt;
           const r = await fetch(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -274,7 +274,7 @@ export default function PapaletaApp() {
                 ideas = fs;
                 localStorage.setItem("pp_ideas", JSON.stringify(ideas));
               }
-            } catch (e) {}
+            } catch (e) { }
           }
         }
 
@@ -293,7 +293,7 @@ export default function PapaletaApp() {
           if (db && user?.uid !== "local" && ideaId && !ideaId.startsWith("l_")) {
             try {
               await updateDoc(doc(db, "ideas", ideaId), { [field]: val });
-            } catch (e) {}
+            } catch (e) { }
           }
         }
 
@@ -335,7 +335,7 @@ export default function PapaletaApp() {
               } else {
                 await updateDoc(doc(db, "ideas", ideaId!), fp as any);
               }
-            } catch (e) {}
+            } catch (e) { }
           }
           ideas = JSON.parse(localStorage.getItem("pp_ideas") || "[]");
           renderNav();
@@ -375,10 +375,10 @@ export default function PapaletaApp() {
           if ($("idea-date"))
             $("idea-date")!.textContent = idea.createdAt
               ? new Date(idea.createdAt).toLocaleDateString("es", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
               : "Hoy";
           setPct(idea.progress || 0);
           if (idea.doc) {
@@ -716,9 +716,9 @@ export default function PapaletaApp() {
             urls = idea?.imgUrls || (idea?.imgUrl ? [idea.imgUrl] : []);
             if (!urls.includes(src)) urls.unshift(src);
           }
-          
+
           if (urls.length === 0) return;
-          
+
           w.innerHTML = "";
           w.style.position = "relative";
           w.style.overflow = "hidden";
@@ -772,7 +772,7 @@ export default function PapaletaApp() {
             dots.style.cssText = "position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10;";
             urls.forEach((_, i) => {
               const d = document.createElement("div");
-              d.style.cssText = `width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,${i===0?0.9:0.4});transition:background 0.3s;`;
+              d.style.cssText = `width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,${i === 0 ? 0.9 : 0.4});transition:background 0.3s;`;
               dots.appendChild(d);
             });
             w.appendChild(dots);
@@ -783,7 +783,7 @@ export default function PapaletaApp() {
               idx = (idx + 1) % urls.length;
               container.style.transform = `translateX(-${idx * 100}%)`;
               Array.from(dots.children).forEach((d: any, i) => {
-                d.style.background = `rgba(255,255,255,${i===idx?0.9:0.4})`;
+                d.style.background = `rgba(255,255,255,${i === idx ? 0.9 : 0.4})`;
               });
             }, 4000);
           }
@@ -829,7 +829,7 @@ export default function PapaletaApp() {
             preview.innerHTML = '<div class="hero-loading"><span class="spin"></span> Creando vista…</div>';
             loadGeneratedImage(
               prompt,
-              (src) => { preview.innerHTML = `<img src="${src}" alt="Visualización">`;  if (status) status.textContent = "Imagen generada. Sigue dictando para actualizar."; },
+              (src) => { preview.innerHTML = `<img src="${src}" alt="Visualización">`; if (status) status.textContent = "Imagen generada. Sigue dictando para actualizar."; },
               () => { preview.innerHTML = '<div class="lv-empty">No pude cargar la imagen ahora.</div>'; },
               640, 360
             );
@@ -936,7 +936,7 @@ export default function PapaletaApp() {
               try {
                 const res = await aiCall("Describe esta imagen de avance de proyecto. Di qué acción o elemento físico se observa en máximo 6 palabras, de forma muy directa. Responde SOLO con esa frase corta, sin explicaciones ni comillas.", b64);
                 desc = res.trim().replace(/^["']|["']$/g, "");
-              } catch (e) {}
+              } catch (e) { }
               tl.push({ data: ev.target!.result, date: new Date().toLocaleDateString("es", { day: "numeric", month: "short" }), desc });
               sF("timeline", tl);
               renderTL(tl);
@@ -987,7 +987,7 @@ export default function PapaletaApp() {
             const c = h[k] || 0;
             const isToday = date.toDateString() === now.toDateString();
             let bg = "transparent", color = "var(--text2)", border = "1px solid var(--border)";
-            if (c > 0) { bg = `color-mix(in srgb, var(--primary) ${Math.min(90, 40 + c*15)}%, transparent)`; color = "#fff"; border = "none"; }
+            if (c > 0) { bg = `color-mix(in srgb, var(--primary) ${Math.min(90, 40 + c * 15)}%, transparent)`; color = "#fff"; border = "none"; }
             if (isToday) border = "2px solid var(--primary)";
             html += `<div title="${k}: ${c} acciones" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:11px;font-weight:500;background:${bg};color:${color};border:${border};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'" onclick="window.__dayClick('${k}',${c})">${d}</div>`;
           }
@@ -1086,7 +1086,7 @@ export default function PapaletaApp() {
         function stopVoice() {
           const active = recog;
           recog = null;
-          if (active) { try { active.stop(); } catch (e) {} }
+          if (active) { try { active.stop(); } catch (e) { } }
           const bv = $("btn-voice");
           if (bv) { bv.textContent = "🎤 Voz"; bv.classList.remove("recording"); }
           $("voice-bar")?.classList.add("hidden");
@@ -1262,7 +1262,7 @@ export default function PapaletaApp() {
 
           const btnRegenImg = $("btn-regen-img");
           if (btnRegenImg) btnRegenImg.onclick = () => lastImgPrompt && genImg(lastImgPrompt);
-          
+
           window.__uploadImg = () => {
             const input = document.createElement("input");
             input.type = "file";
@@ -1367,60 +1367,71 @@ export default function PapaletaApp() {
       </svg>
 
       {/* LOGIN */}
-      <div id="login" className="login-screen">
+      <div id="login" className="login-screen" style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "#05050f", overflow: "hidden", position: "relative" }}>
         <StarfieldBackground />
-        <div className="login-card" style={{ background: "rgba(20,10,40,0.6)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 24, padding: "32px 20px", maxWidth: 320, width: "100%", zIndex: 2, position: "relative", boxShadow: "0 20px 40px rgba(0,0,0,0.6)", display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
-          
-          <div style={{ textAlign: "center", fontSize: "36px", lineHeight: "1", display: "flex", gap: "12px" }}>
-            <span>🎩</span><span>🍭</span>
-          </div>
-          <div style={{ textAlign: "center", marginBottom: "4px" }}>
-            <h1 className="lc-title" style={{ fontSize: "28px", margin: "4px 0", fontWeight: "800", letterSpacing: "-0.5px" }}>Papaleta</h1>
-            <p className="lc-sub" style={{ fontSize: "12px", opacity: 0.7, margin: 0 }}>Tu laboratorio de ideas con IA</p>
+
+        <div className="login-card" style={{
+          background: "rgba(255, 255, 255, 0.03)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          borderRadius: 28,
+          padding: "40px 28px",
+          maxWidth: 440,
+          width: "90%",
+          zIndex: 2,
+          position: "relative",
+          boxShadow: "0 24px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+          alignItems: "center"
+        }}>
+
+          {/* Iconos superiores */}
+          <div style={{ textAlign: "center", display: "flex", gap: "10px", alignItems: "center", justifyContent: "center" }}>
+            {/* Puedes reemplazar estos emojis por tus componentes <img src="..." /> de la piruleta y el sombrero si los tienes */}
+            <span style={{ fontSize: "28px" }}>🍭</span>
+            <span style={{ fontSize: "28px" }}>🎩</span>
           </div>
 
-          <div className="lc-features-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", width: "100%", marginTop: "8px" }}>
-            <div className="lcf" style={{ padding: "12px 8px", fontSize: "11px", background: "rgba(0,0,0,0.4)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", textAlign: "center" }}>
-              <span style={{ fontSize: "20px" }}>🔍</span>
-              <span>Analiza inteligente</span>
+          {/* Títulos */}
+          <div style={{ textAlign: "center", marginBottom: "8px" }}>
+            <h1 className="lc-title" style={{ fontSize: "36px", color: "#ffffff", margin: "0 0 6px 0", fontWeight: "700", letterSpacing: "-0.5px" }}>Papaleta</h1>
+            <p className="lc-sub" style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.6)", margin: 0, fontWeight: "400" }}>Tu laboratorio de ideas con IA</p>
+          </div>
+
+          {/* Cuadrícula de características de 2x2 */}
+          <div className="lc-features-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", width: "100%", marginTop: "4px" }}>
+            <div className="lcf" style={{ padding: "20px 12px", fontSize: "12px", color: "#ffffff", background: "rgba(255, 255, 255, 0.02)", borderRadius: "14px", border: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", textAlign: "center" }}>
+              <span style={{ fontSize: "24px" }}>🔍</span>
+              <span style={{ opacity: 0.9 }}>Analiza inteligente</span>
             </div>
-            <div className="lcf" style={{ padding: "12px 8px", fontSize: "11px", background: "rgba(0,0,0,0.4)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", textAlign: "center" }}>
-              <span style={{ fontSize: "20px" }}>✨</span>
-              <span>Potencia con IA</span>
+            <div className="lcf" style={{ padding: "20px 12px", fontSize: "12px", color: "#ffffff", background: "rgba(255, 255, 255, 0.02)", borderRadius: "14px", border: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", textAlign: "center" }}>
+              <span style={{ fontSize: "24px" }}>✨</span>
+              <span style={{ opacity: 0.9 }}>Potencia con IA</span>
             </div>
-            <div className="lcf" style={{ padding: "12px 8px", fontSize: "11px", background: "rgba(0,0,0,0.4)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", textAlign: "center" }}>
-              <span style={{ fontSize: "20px" }}>📁</span>
-              <span>Kanban interactivo</span>
+            <div className="lcf" style={{ padding: "20px 12px", fontSize: "12px", color: "#ffffff", background: "rgba(255, 255, 255, 0.02)", borderRadius: "14px", border: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", textAlign: "center" }}>
+              <span style={{ fontSize: "24px" }}>📁</span>
+              <span style={{ opacity: 0.9 }}>Kanban interactivo</span>
             </div>
-            <div className="lcf" style={{ padding: "12px 8px", fontSize: "11px", background: "rgba(0,0,0,0.4)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", textAlign: "center" }}>
-              <span style={{ fontSize: "20px" }}>📈</span>
-              <span>Visual de avances</span>
+            <div className="lcf" style={{ padding: "20px 12px", fontSize: "12px", color: "#ffffff", background: "rgba(255, 255, 255, 0.02)", borderRadius: "14px", border: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", textAlign: "center" }}>
+              <span style={{ fontSize: "24px" }}>📈</span>
+              <span style={{ opacity: 0.9 }}>Visual de avances</span>
             </div>
           </div>
 
-          <button id="btn-login" className="btn-google" style={{ width: "100%", padding: "10px", fontSize: "13px", background: "rgba(255,255,255,0.05)", color: "white", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", cursor: "pointer", marginTop: "4px" }}>
+          {/* Botón de Google */}
+          <button id="btn-login" className="btn-google" style={{ width: "100%", padding: "12px", fontSize: "13px", fontWeight: "500", background: "rgba(255, 255, 255, 0.03)", color: "rgba(255,255,255,0.9)", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "10px", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", cursor: "pointer", marginTop: "8px", transition: "background 0.2s" }} onMouseOver={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.07)"} onMouseOut={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}>
             <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.07 5.07 0 01-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09a6.97 6.97 0 010-4.18V7.07H2.18A11 11 0 001 12c0 1.78.43 3.45 1.18 4.93l3.66-2.84z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
-            G G Continuar
+            Continuar con Google
           </button>
 
-          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "10px" }}>
-            <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "14px", opacity: 0.6 }}>👤</span>
-              <input type="text" placeholder="Username" style={{ width: "100%", padding: "10px 12px 10px 34px", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "white", fontSize: "13px", outline: "none" }} />
-            </div>
-            <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "14px", opacity: 0.6 }}>🔒</span>
-              <input type="password" placeholder="***********" style={{ width: "100%", padding: "10px 12px 10px 34px", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "white", fontSize: "13px", outline: "none" }} />
-            </div>
-          </div>
+          {/* Botón de Login Naranja */}
+          <button id="btn-local" className="btn-local" style={{ background: "#f25c05", color: "white", width: "100%", border: "none", padding: "14px", borderRadius: "10px", fontWeight: "600", fontSize: "14px", letterSpacing: "0.5px", cursor: "pointer", transition: "transform 0.15s, background 0.15s", marginTop: "4px", boxShadow: "0 6px 20px rgba(242,92,5,0.25)" }} onMouseOver={(e) => { e.currentTarget.style.transform = "scale(1.01)"; e.currentTarget.style.background = "#ff6b12" }} onMouseOut={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = "#f25c05" }}>LOGIN</button>
 
-          <div style={{ width: "100%", textAlign: "right", marginTop: "-6px" }}>
-            <a href="#" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none", fontSize: "11px" }}>Forgot Password?</a>
-          </div>
-
-          <button id="btn-local" className="btn-local" style={{ background: "#FF6B00", color: "white", width: "100%", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "800", fontSize: "14px", letterSpacing: "1px", cursor: "pointer", transition: "transform 0.2s, background 0.2s", marginTop: "4px", boxShadow: "0 4px 12px rgba(255,107,0,0.3)" }} onMouseOver={(e)=>{e.currentTarget.style.transform="scale(1.02)"; e.currentTarget.style.background="#FF8C00"}} onMouseOut={(e)=>{e.currentTarget.style.transform="scale(1)"; e.currentTarget.style.background="#FF6B00"}}>LOGIN</button>
-          
-          <p className="lc-note" style={{ fontSize: "10px", opacity: 0.5, margin: 0, marginTop: "4px" }}>Gratis &middot; Sin tarjeta &middot; Privado</p>
+          {/* Nota al pie */}
+          <p className="lc-note" style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.4)", margin: 0, marginTop: "6px", letterSpacing: "0.3px" }}>Gratis &middot; Sin tarjeta &middot; Privado</p>
         </div>
       </div>
 
