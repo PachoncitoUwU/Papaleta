@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import "./papaleta.css";
 import { DottedSurface } from "./components/ui/dotted-surface";
+import { StarfieldBackground } from "./components/ui/starfield";
 
 declare global {
   interface Window {
@@ -664,7 +665,13 @@ export default function PapaletaApp() {
                 if (!res.ok) reject(new Error(`HTTP ${res.status}`));
                 else return res.blob();
               })
-              .then(blob => { if (blob) resolve(URL.createObjectURL(blob)); })
+              .then(blob => {
+                if (blob) {
+                  const reader = new FileReader();
+                  reader.onload = () => resolve(reader.result as string);
+                  reader.readAsDataURL(blob);
+                }
+              })
               .catch(err => { clearTimeout(timer); reject(err); });
           });
         }
@@ -699,38 +706,92 @@ export default function PapaletaApp() {
           onerror(friendlyImageError(lastErr));
         }
 
-        function showHeroImg(w: HTMLElement, src: string) {
-          const img = document.createElement("img");
-          img.className = "hero-img";
-          img.src = src;
-          w.innerHTML = "";
-          w.appendChild(img);
+        let _carouselTimer: any;
+        function showHeroImg(w: HTMLElement, src: string | string[]) {
+          const idea = ideaId ? ideas.find((i) => i.id === ideaId) : null;
+          let urls: string[] = [];
+          if (Array.isArray(src)) {
+            urls = src;
+          } else {
+            urls = idea?.imgUrls || (idea?.imgUrl ? [idea.imgUrl] : []);
+            if (!urls.includes(src)) urls.unshift(src);
+          }
           
-          // Custom Upload Button
+          if (urls.length === 0) return;
+          
+          w.innerHTML = "";
+          w.style.position = "relative";
+          w.style.overflow = "hidden";
+
+          const container = document.createElement("div");
+          container.style.cssText = "display:flex;width:100%;height:100%;transition:transform 0.5s ease-in-out;";
+          w.appendChild(container);
+
+          urls.forEach(u => {
+            const img = document.createElement("img");
+            img.className = "hero-img";
+            img.src = u;
+            img.style.minWidth = "100%";
+            img.style.objectFit = "cover";
+            container.appendChild(img);
+          });
+
+          // Upload Button
           const btnUpload = document.createElement("button");
           btnUpload.className = "hero-btn-upload";
-          btnUpload.innerHTML = "🖼️ Subir imagen";
-          btnUpload.style.cssText = "position:absolute;bottom:16px;right:16px;padding:8px 16px;background:rgba(0,0,0,0.6);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);display:flex;align-items:center;gap:6px;";
+          btnUpload.innerHTML = "🖼️ Añadir foto";
+          btnUpload.style.cssText = "position:absolute;bottom:16px;right:16px;padding:8px 16px;background:rgba(0,0,0,0.6);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);z-index:10;";
           btnUpload.onclick = () => {
             const input = document.createElement("input");
             input.type = "file";
             input.accept = "image/*";
+            input.multiple = true;
             input.onchange = (e) => {
-              const file = (e.target as HTMLInputElement).files?.[0];
-              if (file) {
+              const files = (e.target as HTMLInputElement).files;
+              if (!files?.length) return;
+              let loaded = 0;
+              Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (re) => {
-                  const b64 = re.target?.result as string;
-                  showHeroImg(w, b64);
+                  urls.push(re.target?.result as string);
+                  loaded++;
+                  if (loaded === files.length) {
+                    showHeroImg(w, urls);
+                  }
                 };
                 reader.readAsDataURL(file);
-              }
+              });
             };
             input.click();
           };
           w.appendChild(btnUpload);
 
-          if (ideaId) sF("imgUrl", src);
+          // Dots indicator
+          if (urls.length > 1) {
+            const dots = document.createElement("div");
+            dots.style.cssText = "position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10;";
+            urls.forEach((_, i) => {
+              const d = document.createElement("div");
+              d.style.cssText = `width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,${i===0?0.9:0.4});transition:background 0.3s;`;
+              dots.appendChild(d);
+            });
+            w.appendChild(dots);
+
+            let idx = 0;
+            if (_carouselTimer) clearInterval(_carouselTimer);
+            _carouselTimer = setInterval(() => {
+              idx = (idx + 1) % urls.length;
+              container.style.transform = `translateX(-${idx * 100}%)`;
+              Array.from(dots.children).forEach((d: any, i) => {
+                d.style.background = `rgba(255,255,255,${i===idx?0.9:0.4})`;
+              });
+            }, 4000);
+          }
+
+          if (ideaId) {
+            sF("imgUrl", urls[0]);
+            sF("imgUrls", urls);
+          }
         }
 
         function showMinimalPlaceholder(w: HTMLElement, prompt = "", error = "") {
@@ -1307,23 +1368,23 @@ export default function PapaletaApp() {
 
       {/* LOGIN */}
       <div id="login" className="login-screen">
-        <DottedSurface />
-        <div className="login-card" style={{ background: "rgba(255,255,255,0.02)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 24, padding: "48px 28px", maxWidth: 340, width: "100%", zIndex: 2, position: "relative" }}>
-          <img src="/papaletaarriba.png" alt="Papaleta" className="lc-logo-img" />
+        <StarfieldBackground />
+        <div className="login-card" style={{ background: "rgba(10,10,20,0.4)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, padding: "40px 24px", maxWidth: 280, width: "100%", zIndex: 2, position: "relative", boxShadow: "0 20px 40px rgba(0,0,0,0.5)" }}>
+          <div style={{ textAlign: "center", fontSize: "32px", marginBottom: "8px" }}>🍭🎩</div>
           <h1 className="lc-title">Papaleta</h1>
-          <p className="lc-sub">Tu laboratorio de ideas con IA</p>
-          <div className="lc-features">
-            <div className="lcf">🔍 Analiza con preguntas inteligentes</div>
-            <div className="lcf">✨ Potencia y estructura con IA</div>
-            <div className="lcf">🗂️ Kanban interactivo</div>
-            <div className="lcf">📸 Bitacora visual de avances</div>
+          <p className="lc-sub" style={{ fontSize: "13px", opacity: 0.8, marginBottom: "24px" }}>Tu laboratorio de ideas con IA</p>
+          <div className="lc-features" style={{ gap: "8px", marginBottom: "24px" }}>
+            <div className="lcf" style={{ padding: "8px 12px", fontSize: "12px", background: "rgba(255,255,255,0.03)" }}>🔍 Analiza inteligente</div>
+            <div className="lcf" style={{ padding: "8px 12px", fontSize: "12px", background: "rgba(255,255,255,0.03)" }}>✨ Potencia con IA</div>
+            <div className="lcf" style={{ padding: "8px 12px", fontSize: "12px", background: "rgba(255,255,255,0.03)" }}>🗂️ Kanban interactivo</div>
+            <div className="lcf" style={{ padding: "8px 12px", fontSize: "12px", background: "rgba(255,255,255,0.03)" }}>📸 Visual de avances</div>
           </div>
-          <button id="btn-login" className="btn-google">
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.07 5.07 0 01-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09a6.97 6.97 0 010-4.18V7.07H2.18A11 11 0 001 12c0 1.78.43 3.45 1.18 4.93l3.66-2.84z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
-            Continuar con Google
+          <button id="btn-login" className="btn-google" style={{ width: "100%", marginBottom: "12px" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.07 5.07 0 01-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09a6.97 6.97 0 010-4.18V7.07H2.18A11 11 0 001 12c0 1.78.43 3.45 1.18 4.93l3.66-2.84z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
+            Continuar
           </button>
-          <button id="btn-local" className="btn-local">Entrar gratis sin cuenta</button>
-          <p className="lc-note">Gratis &middot; Sin tarjeta &middot; Datos privados</p>
+          <button id="btn-local" className="btn-local" style={{ background: "linear-gradient(135deg, #FF6B00, #FF8C00)", color: "white", width: "100%", border: "none", padding: "12px", borderRadius: "12px", fontWeight: "600", fontSize: "14px", cursor: "pointer", transition: "transform 0.2s" }} onMouseOver={(e)=>e.currentTarget.style.transform="scale(1.02)"} onMouseOut={(e)=>e.currentTarget.style.transform="scale(1)"}>Entrar gratis</button>
+          <p className="lc-note" style={{ fontSize: "11px", marginTop: "16px", opacity: 0.6 }}>Gratis &middot; Sin tarjeta &middot; Privado</p>
         </div>
       </div>
 
